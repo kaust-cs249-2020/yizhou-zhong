@@ -24,4 +24,6 @@ int HammingDistance(string* Pattern, string* Pattern2);
 int ApproximatePatternCount(string* Text, string Pattern, int d);
 
 vector<string> FrequentWordsWithMismatches(string* Text, int k, int d);
+
+vector<string> FrequentWordsWithMismatchesAndReverse(string* Text, int k, int d);
 #endif

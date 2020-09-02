@@ -262,3 +262,46 @@ vector<string> FrequentWordsWithMismatches(string* Text, int k, int d)
 	}
 	return Patterns;
 }
+
+vector<string> FrequentWordsWithMismatchesAndReverse(string* Text, int k, int d)
+{
+	vector<string> Patterns;
+	map<string, int> freqMap;
+	map<string, int>::iterator iterFreqMap;
+	int n = Text->length();
+
+	for (int i = 0; i < n-k+1; i++)
+	{
+		string patternStr = Text->substr(0, k);
+		vector<string> neighborhood = Neighbors(patternStr, d);
+
+		for (int j = 0; j < neighborhood.size(); j++)
+		{
+			string neighbor = neighborhood[j];
+			iterFreqMap = freqMap.find(neighbor);
+			if (iterFreqMap == freqMap.end())
+			{
+				int approxCount = ApproximatePatternCount(Text, neighbor, d) +
+					ApproximatePatternCount(Text, TeverseComplement(&neighbor), d);
+				freqMap.insert(pair<string, int>(neighbor, approxCount));
+			}
+		}
+	}
+
+	int maxValue = 0;
+	for (iterFreqMap = freqMap.begin(); iterFreqMap != freqMap.end(); iterFreqMap++)
+	{
+		if (iterFreqMap->second > maxValue)
+		{
+			maxValue = iterFreqMap->second;
+		}
+	}
+	for (iterFreqMap = freqMap.begin(); iterFreqMap != freqMap.end(); iterFreqMap++)
+	{
+		if (iterFreqMap->second == maxValue)
+		{
+			Patterns.push_back(iterFreqMap->first);
+		}
+	}
+	return Patterns;
+}
