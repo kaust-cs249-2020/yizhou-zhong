@@ -905,3 +905,362 @@ vector<vector<bool>> DeBruijn(string* Text, int k,
 	}*/
 	return adjMat;
 }
+
+vector<vector<bool>> deBruijnGraphPatterns(vector<string>* kmersPatterns,
+	vector<string>* patternStrs, vector<string>* patternStrsNoRepeat)
+{
+	int lenS = kmersPatterns->size();
+	int lenT = (*kmersPatterns)[0].length();
+
+	vector<vector<bool>> adjMat;
+
+	for (int i = 0; i < lenS; i++)
+	{
+		string kmerspattern = (*kmersPatterns)[i];
+		string prePattern = kmerspattern.substr(0, lenT - 1);
+		string sufPattern = kmerspattern.substr(1, lenT - 1);
+		patternStrs->push_back(sufPattern);
+		if (!Belong2Patterns(prePattern, *patternStrsNoRepeat))
+		{
+			patternStrsNoRepeat->push_back(prePattern);
+			adjMat.push_back(vector<bool>(lenS, false));
+		}
+		int j = FindPatternIdx(prePattern, patternStrsNoRepeat);
+		adjMat[j][i] = true;
+	}
+
+	return adjMat;
+}
+
+bool UnexploredEdegs(vector<vector<bool>> nodeRoute)
+{
+	int nodeNum = nodeRoute.size();
+	for (int i = 0; i < nodeNum; i++)
+	{
+		for (int j = 0; j < nodeNum; j++)
+		{
+			if (nodeRoute[i][j])
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+vector<int> EulerianCycle(vector<vector<bool>>* nodeRoute)
+{
+	vector<int> cycleRoute;
+	vector<vector<bool>> updateRoute; 
+	// form a cycle Cycle by randomly walking in Graph
+	for (int i = 0; i < nodeRoute->size(); i++)
+	{// start with the node of every row
+		updateRoute = *nodeRoute;
+		cycleRoute.push_back(i);
+
+		int lastIdx = i;
+		while (true)
+		{
+			bool nextNodeExist=false;
+			for (int j = 0; j < updateRoute[lastIdx].size(); j++)
+			{
+				if (updateRoute[lastIdx][j])
+				{
+					updateRoute[lastIdx][j] = false;
+					cycleRoute.push_back(j);
+					lastIdx = j;
+					nextNodeExist = true;
+					break;
+				}
+			}
+			// if no edge exists from this node, than break from while
+			if (!nextNodeExist)
+			{
+				break;
+			}
+		}
+		
+		if (cycleRoute[0] == cycleRoute[cycleRoute.size()-1])
+		{
+			//cout << "First cycleRoute Size: " << cycleRoute.size() << endl;
+			break;
+		}
+		else
+		{
+			cycleRoute.clear();
+			cycleRoute.shrink_to_fit();
+		}
+	}
+
+	// while there are unexplored edges in Graph
+	while (UnexploredEdegs(updateRoute))
+	{
+		int nodeNum = updateRoute.size();
+		int subStart;
+		for (int i = 0; i < cycleRoute.size(); i++)
+		{
+			bool findExplore = false;
+			for (int j = 0; j < nodeNum; j++)
+			{
+				if (updateRoute[cycleRoute[i]][j])
+				{
+					subStart = cycleRoute[i];
+					findExplore = true;
+					break;
+				}
+			}
+			if (findExplore)
+			{
+				break;
+			}
+		}
+		vector<int> subCycleRoute;
+		subCycleRoute.push_back(subStart);
+		int lastNode = subStart;
+		while (true)
+		{
+			bool nextNodeExist = false;
+			for (int j = 0; j < updateRoute[lastNode].size(); j++)
+			{
+				if (updateRoute[lastNode][j])
+				{
+					updateRoute[lastNode][j] = false;
+					subCycleRoute.push_back(j);
+					lastNode = j;
+					nextNodeExist = true;
+					break;
+				}
+			}
+			// if no edge exists from this node, than break from while
+			if (!nextNodeExist)
+			{
+				break;
+			}
+		}
+		//form Cycle¡¯ by traversing Cycle (starting at newStart) and then randomly 
+		//cout << "subCycleRoute size: " << subCycleRoute.size() << endl;
+		//cout << "before cycleRoute size: " << cycleRoute.size() << endl;
+		for (int i = 0; i < cycleRoute.size(); i++)
+		{
+			if (cycleRoute[i] == subStart)
+			{
+				for (int j = 1; j < subCycleRoute.size(); j++)
+				{
+					cycleRoute.insert(cycleRoute.begin() + i + j, subCycleRoute[j]);
+				}
+				break;
+			}
+		}
+		//cout << "after cycleRoute size: " << cycleRoute.size() << endl;
+	}
+
+	return cycleRoute;
+}
+
+vector<int> EulerianPath(vector<vector<bool>>* nodeRoute)
+{
+	vector<int> cycleRoute;
+	vector<vector<bool>> updateRoute;
+	// find the start position in the graph
+	int startPoint;
+	bool findStartPoint;
+	for (int i = 0; i < nodeRoute->size(); i++)
+	{
+		findStartPoint = true;
+		for (int j = 0; j<nodeRoute->size();j++)
+		{
+			if ((*nodeRoute)[j][i])
+			{
+				findStartPoint = false;
+				break;
+			}
+		}
+		if (findStartPoint)
+		{
+			startPoint = i;
+			break;
+		}
+	}
+	// find the end point
+	int endPoint;
+	bool findEndPoint;
+	for (int i = 0; i < nodeRoute->size(); i++)
+	{
+		findEndPoint = true;
+		for (int j = 0; j < nodeRoute->size(); j++)
+		{
+			if ((*nodeRoute)[i][j])
+			{
+				findEndPoint = false;
+				break;
+			}
+		}
+		if (findEndPoint)
+		{
+			endPoint = i;
+			break;
+		}
+	}
+
+	int lastIdx;
+	if (findStartPoint)
+	{
+		lastIdx = startPoint;
+	}
+	else if (findEndPoint)
+	{
+		for (int i = 0; i < nodeRoute->size(); i++)
+		{
+			if (i!=endPoint)
+			{
+				lastIdx = i;
+			}
+		}
+	}
+	else
+	{
+		lastIdx = 0;
+	}
+
+	// form the first path
+	updateRoute = *nodeRoute;
+	cycleRoute.push_back(lastIdx);
+	
+	while (true)
+	{
+		bool nextNodeExist = false;
+		for (int j = 0; j < updateRoute[lastIdx].size(); j++)
+		{
+			if (updateRoute[lastIdx][j])
+			{
+				updateRoute[lastIdx][j] = false;
+				cycleRoute.push_back(j);
+				lastIdx = j;
+				nextNodeExist = true;
+				break;
+			}
+		}
+		// if no edge exists from this node, than break from while
+		if (!nextNodeExist)
+		{
+			break;
+		}
+	}
+
+	// while there are unexplored edges in Graph
+	while (UnexploredEdegs(updateRoute))
+	{
+		int nodeNum = updateRoute.size();
+		int subStart;
+		for (int i = 0; i < cycleRoute.size(); i++)
+		{
+			bool findExplore = false;
+			for (int j = 0; j < nodeNum; j++)
+			{
+				if (updateRoute[cycleRoute[i]][j])
+				{
+					subStart = cycleRoute[i];
+					findExplore = true;
+					break;
+				}
+			}
+			if (findExplore)
+			{
+				break;
+			}
+		}
+		vector<int> subCycleRoute;
+		subCycleRoute.push_back(subStart);
+		int lastNode = subStart;
+		while (true)
+		{
+			bool nextNodeExist = false;
+			for (int j = 0; j < updateRoute[lastNode].size(); j++)
+			{
+				if (updateRoute[lastNode][j])
+				{
+					updateRoute[lastNode][j] = false;
+					subCycleRoute.push_back(j);
+					lastNode = j;
+					nextNodeExist = true;
+					break;
+				}
+			}
+			// if no edge exists from this node, than break from while
+			if (!nextNodeExist)
+			{
+				break;
+			}
+		}
+		//form Cycle¡¯ by traversing Cycle (starting at newStart) and then randomly 
+		//cout << "subCycleRoute size: " << subCycleRoute.size() << endl;
+		//cout << "before cycleRoute size: " << cycleRoute.size() << endl;
+		for (int i = 0; i < cycleRoute.size(); i++)
+		{
+			if (cycleRoute[i] == subStart)
+			{
+				for (int j = 1; j < subCycleRoute.size(); j++)
+				{
+					cycleRoute.insert(cycleRoute.begin() + i + j, subCycleRoute[j]);
+				}
+				break;
+			}
+		}
+		//cout << "after cycleRoute size: " << cycleRoute.size() << endl;
+	}
+
+	return cycleRoute;
+}
+
+string StringReconstruction(vector<string>* Patterns)
+{
+	string Text;
+	vector<string> patternStrs, patternStrsNoRepeat;
+	// dB ¡û DeBruijn(Patterns)
+	vector<vector<bool>> dB = deBruijnGraphPatterns(Patterns, &patternStrs, &patternStrsNoRepeat);
+	// matrix switch
+	vector<string> nodeList;
+	for (int i = 0; i < patternStrsNoRepeat.size(); i++)
+	{
+		if (!Belong2Patterns(patternStrsNoRepeat[i], nodeList))
+		{
+			nodeList.push_back(patternStrsNoRepeat[i]);
+		}	
+	}
+	for(int j = 0; j < patternStrs.size(); j++)
+	{
+		if (!Belong2Patterns(patternStrs[j], nodeList))
+		{
+			nodeList.push_back(patternStrs[j]);
+		}
+	}
+	vector<vector<bool>> nodeRoute(nodeList.size(), vector<bool>(nodeList.size(), false));
+	int startIdx, endIdx;
+	for (int i = 0; i < patternStrsNoRepeat.size(); i++)
+	{
+		startIdx = findPosition(nodeList, patternStrsNoRepeat[i]);
+		for(int j = 0; j < patternStrs.size(); j++)
+		{
+			endIdx = findPosition(nodeList, patternStrs[j]);
+			if (dB[i][j])
+			{
+				nodeRoute[startIdx][endIdx] = true;
+			}
+		}
+	}
+	// path ¡û EulerianPath(dB)
+	vector<int> ePath = EulerianPath(&nodeRoute);
+	// PathToGenome
+	int k = 0;
+	if (ePath.size() > 0)
+	{
+		Text.append(nodeList[ePath[0]]);
+		k = nodeList[ePath[0]].length();
+	}
+	for (int i = 1; i < ePath.size(); i++)
+	{
+		Text.append(string(1, nodeList[ePath[i]].at(k-1)));
+	}
+
+	return Text;
+}

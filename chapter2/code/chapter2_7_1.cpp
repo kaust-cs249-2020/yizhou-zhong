@@ -11,7 +11,7 @@
 #include "functions.h"
 #include "mathtool.h"
 
-const char dataFileName[30] = "test.txt";
+const char dataFileName[30] = "dataset_369255_5.txt"; // "test.txt";
 const char dataFilePath[40] = "E:/GitHub/yizhou-zhong/chapter2/data/";
 const char outputFileName[20] = "chapter2_7_1.txt";
 
@@ -58,7 +58,35 @@ int main(int argc, char *argv[])
 	free(fileData);
 
 	// operation
-	vector<string> bestMotifs = RandomizedMotifSearch(&DNA, k, t, 1000);
+	vector<string> bestMotifs = RandomizedMotifSearch(&DNA, k, t);
+	for (int i = 0; i < 999; i++)
+	{
+		vector<string> motifs = RandomizedMotifSearch(&DNA, k, t);
+		if (MotifScore(motifs) < MotifScore(bestMotifs))
+		{
+			bestMotifs = motifs;
+		}
+	}
+
+	vector<string> motifs1(5);
+	motifs1[0] = "TCTCGGGG";
+	motifs1[1] = "CCAAGGTG";
+	motifs1[2] = "TACAGGCG";
+	motifs1[3] = "TTCAGGTG";
+	motifs1[4] = "TCCACGTG";
+	//vector<string> motifs2(5);
+	//motifs2[0] = "AACGGCCA";
+	//motifs2[1] = "AAGTGCCA";
+	//motifs2[2] = "AAGTATAC";
+	//motifs2[3] = "AGGTGCAC";
+	//motifs2[4] = "ACGTGCAA";
+	int a = MotifScore(motifs1);
+	int b = MotifScore(bestMotifs);
+
+	cout << "a: " << a << " b: " << b << endl;
+
+	//vector<vector<double>> motifProfile = GetLaplaceRuleProfile(motifs1);
+	//vector<string> motifs = FindProfileMotifs(&DNA, k, motifProfile);
 
 	// output file
 	char outputFullName[100];

@@ -17,3 +17,21 @@ int findMax(vector<int>& in, int n)
 		if (maxvalue < in[i]) maxvalue = in[i];
 	return maxvalue;
 }
+
+int findPosition(vector<string>& in, string str)
+{
+	int idx = -1;
+	for (int i = 0; i < in.size(); i++)
+	{
+		if (
+			strcmp(
+			in[i].c_str(), str.c_str()
+			)==0
+			)
+		{
+			idx = i;
+			break;
+		}
+	}
+	return idx;
+}

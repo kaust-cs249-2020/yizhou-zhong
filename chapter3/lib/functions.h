@@ -48,4 +48,13 @@ vector<vector<bool>> DeBruijn(string* Text, int k, vector<string>* patternStrs);
 
 vector<vector<bool>> DeBruijn(string* Text, int k,
 	vector<string>* patternStrs, vector<string>* patternStrsNoRepeat);
+
+vector<vector<bool>> deBruijnGraphPatterns(vector<string>* kmersPatterns,
+	vector<string>* patternStrs, vector<string>* patternStrsNoRepeat);
+
+vector<int> EulerianCycle(vector<vector<bool>>* nodeRoute);
+
+vector<int> EulerianPath(vector<vector<bool>>* nodeRoute);
+
+string StringReconstruction(vector<string>* Patterns);
 #endif

@@ -11,7 +11,7 @@
 #include "functions.h"
 #include "mathtool.h"
 
-const char dataFileName[30] = "dataset_369254_9.txt";
+const char dataFileName[30] = "dataset_369253_5.txt";
 const char dataFilePath[40] = "E:/GitHub/yizhou-zhong/chapter2/data/";
 const char outputFileName[20] = "chapter2_5_2.txt";
 

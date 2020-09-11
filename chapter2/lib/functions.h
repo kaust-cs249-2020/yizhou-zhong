@@ -36,5 +36,12 @@ string FindProfileMost(string* Text, int k, vector<vector<double>> probMat);
 
 vector<string> GreedyMotifSearch(vector<string>* DNA, int k, int t);
 
-vector<string> RandomizedMotifSearch(vector<string>* DNA, int k, int t, int itertimes);
+vector<string> RandomizedMotifSearch(vector<string>* DNA, int k, int t);// , int itertimes);
+
+int MotifScore(vector<string> motifs);
+
+vector<vector<double>> GetLaplaceRuleProfile(vector<string> motifs);
+
+vector<string> FindProfileMotifs(vector<string>* DNA, int k, vector<vector<double>> probMat);
+
 #endif

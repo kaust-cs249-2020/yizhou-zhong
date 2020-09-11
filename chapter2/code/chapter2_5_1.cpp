@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
 
 	outfile.close();
 
+	system("pause");
 	// end
 	return 0;
 }

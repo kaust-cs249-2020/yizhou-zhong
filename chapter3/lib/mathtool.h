@@ -9,4 +9,5 @@ int findMin(vector<int>& in, int n);
 
 int findMax(vector<int>& in, int n);
 
+int findPosition(vector<string>& in, string str);
 #endif

@@ -483,52 +483,73 @@ bool Belong2Patterns(string Pattern, vector<string> Patterns)
 	return belongFlag;
 }
 
+double ProfileProbability(string kmerPattern, vector<vector<double>> probMat)
+{
+	double kmerProb = 1;
+	int k = kmerPattern.length();
+	for (int j = 0; j < k; j++)
+	{
+		int nucIdx;
+		switch (kmerPattern.at(j))
+		{
+		case 'A':
+			nucIdx = 0;
+			break;
+		case 'C':
+			nucIdx = 1;
+			break;
+		case 'G':
+			nucIdx = 2;
+			break;
+		case 'T':
+			nucIdx = 3;
+			break;
+		default:
+			;
+		}
+		kmerProb *= probMat[nucIdx][j];
+	}
+	return kmerProb;
+}
+
 string FindProfileMost(string* Text, int k, vector<vector<double>> probMat)
 {
+	////
+	//if (showcout)
+	//{
+	//	for (int p = 0; p < probMat.size(); p++)
+	//	{
+	//		for (int q = 0; q < probMat[0].size(); q++)
+	//		{
+	//			cout << probMat[p][q] << ' ';
+	//		}
+	//		cout << endl;
+	//	}
+	//}
+	////
+	
 	vector<string> kmerPatterns;
 	int lenText = Text->length();
 	// find all k-mers
 	for (int i = 0; i < lenText - k + 1;i++)
 	{
 		string subString = Text->substr(i, k);
-		if (!Belong2Patterns(subString, kmerPatterns))
-		{
-			kmerPatterns.push_back(subString);
-		}
+		//if (!Belong2Patterns(subString, kmerPatterns))
+		//{
+		//	kmerPatterns.push_back(subString);
+		//}
+		kmerPatterns.push_back(subString);
 	}
 	// cal probability of each kmer;
 	double maxProb=-1;
 	int maxPronIdx;
 	for (int i = 0; i < kmerPatterns.size(); i++)
 	{
-		double kmerProb = 1;
-		for (int j = 0; j < k; j++)
-		{
-			int nucIdx;
-			switch (kmerPatterns[i].at(j))
-			{
-			case 'A':
-				nucIdx = 0;
-				break;
-			case 'C':
-				nucIdx = 1;
-				break;
-			case 'G':
-				nucIdx = 2;
-				break;
-			default:
-				nucIdx = 3;
-			}
-			kmerProb *= probMat[nucIdx][j];
-		}
+		double kmerProb = ProfileProbability(kmerPatterns[i], probMat);
 		////
-		//if (showcout && strcmp(kmerPatterns[i].c_str(), "AGTAATATGTAC") == 0)
+		//if (showcout)
 		//{
-		//	cout << "AGTAATATGTAC " << kmerProb << endl;
-		//}
-		//if (showcout && strcmp(kmerPatterns[i].c_str(), "TACAGGTAGATA") == 0)
-		//{
-		//	cout << "TACAGGTAGATA " << kmerProb << endl;
+		//	cout << kmerPatterns[i].c_str() << ' ' << kmerProb << endl;
 		//}
 		////
 		if (kmerProb > maxProb)
@@ -541,11 +562,11 @@ string FindProfileMost(string* Text, int k, vector<vector<double>> probMat)
 	return kmerPatterns[maxPronIdx];
 }
 
-vector < vector<double>> GetProfile(vector<string> motifs)
+vector<vector<double>> GetProfile(vector<string> motifs)
 {
 	int lenM = motifs.size();
 	int lenS = motifs[0].length();
-	vector < vector<double>> profileMat(4, vector<double>(lenS, 0));
+	vector<vector<double>> profileMat(4, vector<double>(lenS, 0));
 	for (int i = 0; i < lenS; i++)
 	{
 		int Anum = 0, Cnum = 0, Gnum = 0, Tnum = 0;
@@ -562,19 +583,23 @@ vector < vector<double>> GetProfile(vector<string> motifs)
 			case 'G':
 				Gnum++;
 				break;
-			default:
+			case 'T':
 				Tnum++;
+				break;
+			default:
+				;
 			}
 		}
-		profileMat[0][i] = 1.0*Anum / (lenM*1.0);
-		profileMat[1][i] = 1.0*Cnum / (lenM*1.0);
-		profileMat[2][i] = 1.0*Gnum / (lenM*1.0);
-		profileMat[3][i] = 1.0*Tnum / (lenM*1.0);
+		profileMat[0][i] = (1.0 * Anum) / lenM;
+		profileMat[1][i] = (1.0 * Cnum) / lenM;
+		profileMat[2][i] = (1.0 * Gnum) / lenM;
+		profileMat[3][i] = (1.0 * Tnum) / lenM;
 	}
+
 	return profileMat;
 }
 
-vector < vector<double>> GetLaplaceRuleProfile(vector<string> motifs)
+vector<vector<double>> GetLaplaceRuleProfile(vector<string> motifs)
 {
 	int lenM = motifs.size();
 	int lenS = motifs[0].length();
@@ -645,6 +670,7 @@ vector<string> GreedyMotifSearch(vector<string>* DNA, int k, int t)
 	{
 		BestMotifs.push_back((*DNA)[i].substr(0, k));
 	}
+
 	// find all the k-mer motif in first row
 	int lenText = (*DNA)[0].length();
 	vector<string> firstKmers;
@@ -656,38 +682,47 @@ vector<string> GreedyMotifSearch(vector<string>* DNA, int k, int t)
 			firstKmers.push_back(kmer);
 		}
 	}
+
 	// find the best motifs
 	for (int i = 0; i < firstKmers.size(); i++)
 	{	
 		string kmer = firstKmers[i];
-		vector<string> motifs(t, kmer);
-		/*vector<string> motifs = BestMotifs;
-		motifs[0] = kmer;*/
+		vector<string> motifs(1, kmer);
 
 		for (int j = 1; j < DNA->size(); j++)
 		{
-			// vector<vector<double>> motifProfile = GetProfile(motifs);
-			vector<vector<double>> motifProfile = GetLaplaceRuleProfile(motifs);
+			vector<vector<double>> motifProfile = GetProfile(motifs);
+
+			////
 			//if (i == 143 && j == 6)
 			//{
-			//	// cout << "i j:" << i << ' ' << j << ' ' << motifs[j].c_str() << endl;
+			//	cout << "i j:" << i << ' ' << j << endl;
 			//	showcout = true;
 			//	cout << "motifs:" << endl;
 			//	for (int m = 0; m < motifs.size(); m++)
 			//	{
 			//		cout << motifs[m].c_str() << endl;
 			//	}
+			//	ofstream outfile("a.txt");
 			//	for (int p = 0; p < motifProfile.size(); p++)
 			//	{
 			//		for (int q = 0; q < motifProfile[0].size(); q++)
 			//		{
 			//			cout << motifProfile[p][q] << ' ';
+			//			outfile << motifProfile[p][q] << ' ';
 			//		}
 			//		cout << endl;
+			//		outfile << endl;
 			//	}
+			//	outfile.close();
 			//}
-			motifs[j] = FindProfileMost(&(*DNA)[j], k, motifProfile);
+			////
+
+			motifs.push_back(FindProfileMost(&(*DNA)[j], k, motifProfile));
+			 
+			////
 			//showcout = false;
+			////
 		}
 		if (MotifScore(motifs) < MotifScore(BestMotifs))
 		{
@@ -715,40 +750,73 @@ vector<string> FindProfileMotifs(vector<string>* DNA, int k, vector<vector<doubl
 	return profileMotifs;
 }
 
-vector<string> RandomizedMotifSearch(vector<string>* DNA, int k, int t, int itertimes)
+vector<string> RandomizedMotifSearch(vector<string>* DNA, int k, int t)//, int itertimes)
 {
 	vector<string> bestMotifs, motifs;
 	int lenS = (*DNA)[0].length();
+
+	// initial the Bestmotifs
 	for (int i = 0; i < t; i++)
 	{
 		motifs.push_back((*DNA)[i].substr(RandIdx(0, lenS - k), k));
 	}
 	bestMotifs = motifs;
 
-	for (int j = 0; j < itertimes; j++)
-	{
-		if (j != 0)
-		{
-			for (int n = 0; n < t; n++)
-			{
-				motifs[n] = (*DNA)[n].substr(RandIdx(0, lenS - k), k);
-			}
-		}
+	//for (int j = 0; j < itertimes; j++)
+	//{
+	//	if (j != 0)
+	//	{
+	//		for (int n = 0; n < t; n++)
+	//		{
+	//			motifs[n] = (*DNA)[n].substr(RandIdx(0, lenS - k), k);
+	//		}
+	//	}
 
 		vector<vector<double>> motifProfile;
-		while (1)
+		while (true)
 		{
+			//for (int i = 0; i < t; i++)
+			//{
+			//	motifProfile = GetLaplaceRuleProfile(motifs);
+			//	motifs[i] = FindProfileMost(&(*DNA)[i], k, motifProfile);
+			//}
+
 			motifProfile = GetLaplaceRuleProfile(motifs);
+			// motifProfile = GetProfile(motifs);
 			motifs = FindProfileMotifs(DNA, k, motifProfile);
+
+			//if (
+			//	strcmp(
+			//	motifs[0].c_str(), "TCTCGGGG"
+			//	) == 0 &&
+			//	strcmp(
+			//	motifs[1].c_str(), "CCAAGGTG"
+			//	) == 0 &&
+			//	strcmp(
+			//	motifs[2].c_str(), "TACAGGCG"
+			//	) == 0 &&
+			//	strcmp(
+			//	motifs[3].c_str(), "TTCAGGTG"
+			//	) == 0 &&
+			//	strcmp(
+			//	motifs[4].c_str(), "TCCACGTG"
+			//	) == 0
+			//	)
+			//{
+			//	cout << 'a' << endl;
+			//}
+
 			if (MotifScore(motifs) < MotifScore(bestMotifs))
 			{
 				bestMotifs = motifs;
 			}
 			else
 			{
-				break;
+				//break;
+				return bestMotifs;
 			}
 		}
-	}
-	return bestMotifs;
+	//}
+
+	//return bestMotifs;
 }
