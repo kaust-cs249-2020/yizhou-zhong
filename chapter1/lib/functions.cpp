@@ -272,7 +272,7 @@ vector<string> FrequentWordsWithMismatchesAndReverse(string* Text, int k, int d)
 
 	for (int i = 0; i < n-k+1; i++)
 	{
-		string patternStr = Text->substr(0, k);
+		string patternStr = Text->substr(i, k);
 		vector<string> neighborhood = Neighbors(patternStr, d);
 
 		for (int j = 0; j < neighborhood.size(); j++)
