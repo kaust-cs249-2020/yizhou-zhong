@@ -812,11 +812,35 @@ vector<string> RandomizedMotifSearch(vector<string>* DNA, int k, int t)//, int i
 			}
 			else
 			{
-				//break;
 				return bestMotifs;
 			}
 		}
-	//}
+}
 
-	//return bestMotifs;
+vector<string> GibbsSampler(vector<string>* DNA, int k, int t, int N)
+{
+	vector<string> motifs;
+	for (int i = 0; i < DNA->size();i++)
+	{
+		int r = RandIdx(0, DNA->size() - k);
+		string randStr = (*DNA)[i].substr(r, k);
+		motifs.push_back(randStr);
+	}
+	vector<string> bestMotifs=motifs;
+
+	vector<vector<double>> motifProfile;
+	for (int j = 0; j < N; j++)
+	{
+		int i = RandIdx(0, t-1);
+		vector<string> tempMotifs = motifs;
+		tempMotifs.erase(tempMotifs.begin() + i);
+		motifProfile = GetLaplaceRuleProfile(tempMotifs);
+		motifs[i] = FindProfileMost(&(*DNA)[i], k, motifProfile);
+
+		if (MotifScore(motifs) < MotifScore(bestMotifs))
+		{
+			bestMotifs = motifs;
+		}
+	}
+	return bestMotifs;
 }

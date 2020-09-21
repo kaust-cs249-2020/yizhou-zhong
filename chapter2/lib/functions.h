@@ -44,4 +44,5 @@ vector<vector<double>> GetLaplaceRuleProfile(vector<string> motifs);
 
 vector<string> FindProfileMotifs(vector<string>* DNA, int k, vector<vector<double>> probMat);
 
+vector<string> GibbsSampler(vector<string>* DNA, int k, int t, int N);
 #endif
