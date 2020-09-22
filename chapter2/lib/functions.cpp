@@ -692,37 +692,7 @@ vector<string> GreedyMotifSearch(vector<string>* DNA, int k, int t)
 		for (int j = 1; j < DNA->size(); j++)
 		{
 			vector<vector<double>> motifProfile = GetProfile(motifs);
-
-			////
-			//if (i == 143 && j == 6)
-			//{
-			//	cout << "i j:" << i << ' ' << j << endl;
-			//	showcout = true;
-			//	cout << "motifs:" << endl;
-			//	for (int m = 0; m < motifs.size(); m++)
-			//	{
-			//		cout << motifs[m].c_str() << endl;
-			//	}
-			//	ofstream outfile("a.txt");
-			//	for (int p = 0; p < motifProfile.size(); p++)
-			//	{
-			//		for (int q = 0; q < motifProfile[0].size(); q++)
-			//		{
-			//			cout << motifProfile[p][q] << ' ';
-			//			outfile << motifProfile[p][q] << ' ';
-			//		}
-			//		cout << endl;
-			//		outfile << endl;
-			//	}
-			//	outfile.close();
-			//}
-			////
-
 			motifs.push_back(FindProfileMost(&(*DNA)[j], k, motifProfile));
-			 
-			////
-			//showcout = false;
-			////
 		}
 		if (MotifScore(motifs) < MotifScore(BestMotifs))
 		{
@@ -762,59 +732,22 @@ vector<string> RandomizedMotifSearch(vector<string>* DNA, int k, int t)//, int i
 	}
 	bestMotifs = motifs;
 
-	//for (int j = 0; j < itertimes; j++)
-	//{
-	//	if (j != 0)
-	//	{
-	//		for (int n = 0; n < t; n++)
-	//		{
-	//			motifs[n] = (*DNA)[n].substr(RandIdx(0, lenS - k), k);
-	//		}
-	//	}
+	vector<vector<double>> motifProfile;
+	while (true)
+	{
+		motifProfile = GetLaplaceRuleProfile(motifs);
+		// motifProfile = GetProfile(motifs);
+		motifs = FindProfileMotifs(DNA, k, motifProfile);
 
-		vector<vector<double>> motifProfile;
-		while (true)
+		if (MotifScore(motifs) < MotifScore(bestMotifs))
 		{
-			//for (int i = 0; i < t; i++)
-			//{
-			//	motifProfile = GetLaplaceRuleProfile(motifs);
-			//	motifs[i] = FindProfileMost(&(*DNA)[i], k, motifProfile);
-			//}
-
-			motifProfile = GetLaplaceRuleProfile(motifs);
-			// motifProfile = GetProfile(motifs);
-			motifs = FindProfileMotifs(DNA, k, motifProfile);
-
-			//if (
-			//	strcmp(
-			//	motifs[0].c_str(), "TCTCGGGG"
-			//	) == 0 &&
-			//	strcmp(
-			//	motifs[1].c_str(), "CCAAGGTG"
-			//	) == 0 &&
-			//	strcmp(
-			//	motifs[2].c_str(), "TACAGGCG"
-			//	) == 0 &&
-			//	strcmp(
-			//	motifs[3].c_str(), "TTCAGGTG"
-			//	) == 0 &&
-			//	strcmp(
-			//	motifs[4].c_str(), "TCCACGTG"
-			//	) == 0
-			//	)
-			//{
-			//	cout << 'a' << endl;
-			//}
-
-			if (MotifScore(motifs) < MotifScore(bestMotifs))
-			{
-				bestMotifs = motifs;
-			}
-			else
-			{
-				return bestMotifs;
-			}
+			bestMotifs = motifs;
 		}
+		else
+		{
+			return bestMotifs;
+		}
+	}	
 }
 
 vector<string> GibbsSampler(vector<string>* DNA, int k, int t, int N)

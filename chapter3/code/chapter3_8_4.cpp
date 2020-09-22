@@ -11,15 +11,15 @@
 #include "functions.h"
 #include "mathtool.h"
 
-const char dataFileName[30] = "dataset_369270_8.txt";
+const char dataFileName[30] = "dataset_369273_11.txt";// "sample.txt";
 const char dataFilePath[40] = "E:/GitHub/yizhou-zhong/chapter3/data/";
-const char outputFileName[20] = "chapter3_5_1.txt";
+const char outputFileName[20] = "chapter3_8_4.txt";
 
 int main(int argc, char *argv[])
 {
-	vector<string> kmersPatterns;
+	vector<string> patternStrs;
 
-	//// load txt file
+	// load txt file
 	char fileFullName[100];
 	strcpy(fileFullName, dataFilePath);
 	strcat(fileFullName, dataFileName);
@@ -36,17 +36,20 @@ int main(int argc, char *argv[])
 			//
 			if (buf[0]!='\0')
 			{
-				kmersPatterns.push_back(buf);
+				patternStrs.push_back(buf);
 			}
 			//
 		}
 		infile.close();
 	}
+	int k = stoi(patternStrs[0]);
+
+	vector<string> kmersPatterns = GetKmersPatterns(k);
 
 	// operation
-	vector<string> patternStrs;
-	vector<string> patternStrsNoRepeat;
-	NodeMappingChart adjMat = deBruijnGraphPatterns(&kmersPatterns, &patternStrs, &patternStrsNoRepeat);
+	string Text = StringReconstruction(&kmersPatterns);
+	int n = Text.length();
+	Text.erase(n-k+1);
 
 	// output file
 	char outputFullName[100];
@@ -55,37 +58,8 @@ int main(int argc, char *argv[])
 
 	ofstream outfile(outputFullName);
 
-	int matY = adjMat.size();
-	int matX;
-	if (matY > 0)
-	{
-		matX = adjMat[0].size();
-	}
-	 
-	for (int i = 0; i < matY; i++)
-	{
-		bool adjexist = false;
-		for (int j = 0; j < matX; j++)
-		{
-			if (adjMat[i][j])
-			{
-				if (!adjexist)
-				{
-					outfile << patternStrsNoRepeat[i] << " -> ";
-					outfile << patternStrs[j];
-					adjexist = true;
-				}
-				else
-				{
-					outfile << ',' << patternStrs[j];
-				}
-			}
-		}
-		if (adjexist)
-		{
-			outfile << endl;
-		}
-	}
+	outfile << Text.c_str() << endl;
+	cout << Text.c_str() << endl;
 
 	outfile.close();
 	system("pause");

@@ -8,6 +8,11 @@
 
 using namespace std;
 
+typedef vector<pair<int, int>> GraphEdgeChart;
+typedef vector<pair<int, int>> NodeDegreeChart;
+typedef vector<pair<string, string>> PairedReadsChart;
+typedef vector<vector<bool>> NodeMappingChart;
+
 int PatternCount(string* Text, string Pattern);
 
 map<string, int> FrequencyTable(string* Text, int k);
@@ -42,19 +47,25 @@ vector<string> Composition(string* Text, int k);
 
 string Reconstruct(vector<string>* patternStrs);
 
-vector<vector<bool>> OverlapGraph(vector<string>* patternStrs);
+NodeMappingChart OverlapGraph(vector<string>* patternStrs);
 
-vector<vector<bool>> DeBruijn(string* Text, int k, vector<string>* patternStrs);
+NodeMappingChart DeBruijn(string* Text, int k, vector<string>* patternStrs);
 
-vector<vector<bool>> DeBruijn(string* Text, int k,
+NodeMappingChart DeBruijn(string* Text, int k,
 	vector<string>* patternStrs, vector<string>* patternStrsNoRepeat);
 
-vector<vector<bool>> deBruijnGraphPatterns(vector<string>* kmersPatterns,
+NodeMappingChart deBruijnGraphPatterns(vector<string>* kmersPatterns,
 	vector<string>* patternStrs, vector<string>* patternStrsNoRepeat);
 
-vector<int> EulerianCycle(vector<vector<bool>>* nodeRoute);
+vector<int> EulerianCycle(NodeMappingChart* nodeRoute);
 
-vector<int> EulerianPath(vector<vector<bool>>* nodeRoute);
+vector<int> EulerianPath(NodeMappingChart* nodeRoute);
 
 string StringReconstruction(vector<string>* Patterns);
+
+vector<string> GetKmersPatterns(int k);
+
+string StringReconstructionByPairedReads(int k, int d, PairedReadsChart* pairedReads);
+
+vector<string> ContigGeneration(vector<string>* Pattens);
 #endif

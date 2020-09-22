@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
 	// operation
 	vector<string> patternStrs;
 	vector<string> patternStrsNoRepeat;
-	vector<vector<bool>> adjMat = DeBruijn(&Text, k, &patternStrs, &patternStrsNoRepeat);
+	NodeMappingChart adjMat = DeBruijn(&Text, k, &patternStrs, &patternStrsNoRepeat);
 
 	// output file
 	char outputFullName[100];

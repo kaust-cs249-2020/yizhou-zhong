@@ -3,8 +3,6 @@
 #include <cstdlib>
 #include <iostream>
 
-bool showcout = false;
-
 int PatternCount(string* Text, string Pattern)
 {
 	int pCount = 0;
@@ -483,6 +481,21 @@ bool Belong2Patterns(string Pattern, vector<string> Patterns)
 	return belongFlag;
 }
 
+bool Belong2Patterns(string Pattern, vector<string> Patterns, int& idx)
+{
+	bool belongFlag = false;
+	for (int i = 0; i < Patterns.size(); i++)
+	{
+		if (strcmp(Patterns[i].c_str(), Pattern.c_str()) == 0)
+		{
+			belongFlag = true;
+			idx = i;
+			break;
+		}
+	}
+	return belongFlag;
+}
+
 string FindProfileMost(string* Text, int k, vector<vector<double>> probMat)
 {
 	vector<string> kmerPatterns;
@@ -813,10 +826,10 @@ string Suffix(string Text)
 	return Text.substr(1, lenT - 1);
 }
 
-vector<vector<bool>> OverlapGraph(vector<string>* patternStrs)
+NodeMappingChart OverlapGraph(vector<string>* patternStrs)
 {
 	int patLen = patternStrs->size();
-	vector<vector<bool>> adjMat(patLen, vector<bool>(patLen, false));
+	NodeMappingChart adjMat(patLen, vector<bool>(patLen, false));
 
 	for (int i = 0; i < patLen; i++)
 	{
@@ -856,7 +869,7 @@ int FindPatternIdx(string patternStr, vector<string>* patterns)
 	}
 }
 
-vector<vector<bool>> DeBruijn(string* Text, int k, 
+NodeMappingChart DeBruijn(string* Text, int k, 
 	vector<string>* patternStrs, vector<string>* patternStrsNoRepeat)
 {
 	int b = k - 1;
@@ -873,7 +886,7 @@ vector<vector<bool>> DeBruijn(string* Text, int k,
 
 	int patLen = patternStrs->size();
 	int patLenNoRe = patternStrsNoRepeat->size();
-	vector<vector<bool>> adjMat(patLenNoRe, vector<bool>(patLen, false));
+	NodeMappingChart adjMat(patLenNoRe, vector<bool>(patLen, false));
 
 	for (int i = 0; i < patLen; i++)
 	{
@@ -906,13 +919,13 @@ vector<vector<bool>> DeBruijn(string* Text, int k,
 	return adjMat;
 }
 
-vector<vector<bool>> deBruijnGraphPatterns(vector<string>* kmersPatterns,
+NodeMappingChart deBruijnGraphPatterns(vector<string>* kmersPatterns,
 	vector<string>* patternStrs, vector<string>* patternStrsNoRepeat)
 {
 	int lenS = kmersPatterns->size();
 	int lenT = (*kmersPatterns)[0].length();
 
-	vector<vector<bool>> adjMat;
+	NodeMappingChart adjMat;
 
 	for (int i = 0; i < lenS; i++)
 	{
@@ -932,7 +945,41 @@ vector<vector<bool>> deBruijnGraphPatterns(vector<string>* kmersPatterns,
 	return adjMat;
 }
 
-bool UnexploredEdegs(vector<vector<bool>> nodeRoute)
+GraphEdgeChart deBruijnGraphPatterns(vector<string>* kmersPatterns,
+	vector<string>* patternStrsNoRepeat)
+{
+	int lenS = kmersPatterns->size();
+	int lenT = (*kmersPatterns)[0].length();
+
+	GraphEdgeChart adjMat;
+
+	cout << "Patten size: " << lenS << endl;
+
+	for (int i = 0; i < lenS; i++)
+	{
+		cout << "deBruijnGraph steps: " << i << endl;
+		string kmerspattern = (*kmersPatterns)[i];
+		string prePattern = kmerspattern.substr(0, lenT - 1);
+		string sufPattern = kmerspattern.substr(1, lenT - 1);
+
+		int startIdx, endIdx;
+		if (!Belong2Patterns(prePattern, *patternStrsNoRepeat, startIdx))
+		{
+			patternStrsNoRepeat->push_back(prePattern);
+			startIdx = patternStrsNoRepeat->size() - 1;
+		}
+		if (!Belong2Patterns(sufPattern, *patternStrsNoRepeat, endIdx))
+		{
+			patternStrsNoRepeat->push_back(sufPattern);
+			endIdx = patternStrsNoRepeat->size() - 1;
+		}
+		adjMat.push_back(pair<int, int>(startIdx, endIdx));
+	}
+
+	return adjMat;
+}
+
+bool UnexploredEdegs(NodeMappingChart nodeRoute)
 {
 	int nodeNum = nodeRoute.size();
 	for (int i = 0; i < nodeNum; i++)
@@ -948,10 +995,10 @@ bool UnexploredEdegs(vector<vector<bool>> nodeRoute)
 	return false;
 }
 
-vector<int> EulerianCycle(vector<vector<bool>>* nodeRoute)
+vector<int> EulerianCycle(NodeMappingChart* nodeRoute)
 {
 	vector<int> cycleRoute;
-	vector<vector<bool>> updateRoute; 
+	NodeMappingChart updateRoute; 
 	// form a cycle Cycle by randomly walking in Graph
 	for (int i = 0; i < nodeRoute->size(); i++)
 	{// start with the node of every row
@@ -1057,10 +1104,10 @@ vector<int> EulerianCycle(vector<vector<bool>>* nodeRoute)
 	return cycleRoute;
 }
 
-vector<int> EulerianPath(vector<vector<bool>>* nodeRoute)
+vector<int> EulerianPath(NodeMappingChart* nodeRoute)
 {
 	vector<int> cycleRoute;
-	vector<vector<bool>> updateRoute;
+	NodeMappingChart updateRoute;
 	// find the start position in the graph
 	int startPoint;
 	bool findStartPoint;
@@ -1193,8 +1240,8 @@ vector<int> EulerianPath(vector<vector<bool>>* nodeRoute)
 			}
 		}
 		//form Cycle¡¯ by traversing Cycle (starting at newStart) and then randomly 
-		//cout << "subCycleRoute size: " << subCycleRoute.size() << endl;
-		//cout << "before cycleRoute size: " << cycleRoute.size() << endl;
+		cout << "subCycleRoute size: " << subCycleRoute.size() << endl;
+		cout << "before cycleRoute size: " << cycleRoute.size() << endl;
 		for (int i = 0; i < cycleRoute.size(); i++)
 		{
 			if (cycleRoute[i] == subStart)
@@ -1206,7 +1253,7 @@ vector<int> EulerianPath(vector<vector<bool>>* nodeRoute)
 				break;
 			}
 		}
-		//cout << "after cycleRoute size: " << cycleRoute.size() << endl;
+		cout << "after cycleRoute size: " << cycleRoute.size() << endl;
 	}
 
 	return cycleRoute;
@@ -1217,7 +1264,7 @@ string StringReconstruction(vector<string>* Patterns)
 	string Text;
 	vector<string> patternStrs, patternStrsNoRepeat;
 	// dB ¡û DeBruijn(Patterns)
-	vector<vector<bool>> dB = deBruijnGraphPatterns(Patterns, &patternStrs, &patternStrsNoRepeat);
+	NodeMappingChart dB = deBruijnGraphPatterns(Patterns, &patternStrs, &patternStrsNoRepeat);
 	// matrix switch
 	vector<string> nodeList;
 	for (int i = 0; i < patternStrsNoRepeat.size(); i++)
@@ -1234,7 +1281,7 @@ string StringReconstruction(vector<string>* Patterns)
 			nodeList.push_back(patternStrs[j]);
 		}
 	}
-	vector<vector<bool>> nodeRoute(nodeList.size(), vector<bool>(nodeList.size(), false));
+	NodeMappingChart nodeRoute(nodeList.size(), vector<bool>(nodeList.size(), false));
 	int startIdx, endIdx;
 	for (int i = 0; i < patternStrsNoRepeat.size(); i++)
 	{
@@ -1263,4 +1310,237 @@ string StringReconstruction(vector<string>* Patterns)
 	}
 
 	return Text;
+}
+
+vector<string> GetKmersPatterns(int k)
+{
+	vector<string> kmersPatterns;
+	if (k<=0)
+	{
+		return kmersPatterns;
+	}
+	else if (k==1)
+	{
+		kmersPatterns.push_back("0");
+		kmersPatterns.push_back("1");
+		return kmersPatterns;
+	}
+	else
+	{
+		vector<string> preKmersPatterns = GetKmersPatterns(k-1);
+		int n = preKmersPatterns.size();
+		for (int i = 0; i < n; i++)
+		{
+			kmersPatterns.push_back(preKmersPatterns[i] + "0");
+			kmersPatterns.push_back(preKmersPatterns[i] + "1");
+		}
+		return kmersPatterns;
+	}
+}
+
+bool Belong2Pairs(pair<string, string>& Pattern, PairedReadsChart& Patterns, int& idx)
+{
+	bool belongFlag = false;
+	for (int i = 0; i < Patterns.size(); i++)
+	{
+		if (strcmp(Patterns[i].first.c_str(), Pattern.first.c_str()) == 0
+			&& strcmp(Patterns[i].second.c_str(), Pattern.second.c_str()) == 0
+			)
+		{
+			belongFlag = true;
+			idx = i;
+			break;
+		}
+	}
+	return belongFlag;
+}
+
+int FindPairIdx(pair<string, string> patternStr, PairedReadsChart* patterns)
+{
+	int len = patterns->size();
+	for (int i = 0; i < len; i++)
+	{
+		if (
+			strcmp(patternStr.first.c_str(), (*patterns)[i].first.c_str()) == 0
+			&& strcmp(patternStr.second.c_str(), (*patterns)[i].second.c_str()) == 0
+			)
+		{
+			return i;
+		}
+	}
+}
+
+GraphEdgeChart deBruijnGraphFromPairs(PairedReadsChart* readPairs, PairedReadsChart* pairStrsNoRepeat)
+{
+	int lenS = readPairs->size();
+	int lenT = (*readPairs)[0].first.length();
+
+	GraphEdgeChart adjMat;
+
+	for (int i = 0; i < lenS; i++)
+	{
+		pair<string, string> kmerspair = (*readPairs)[i];
+		pair<string, string> prepair = pair<string, string>(
+			kmerspair.first.substr(0, lenT - 1),
+			kmerspair.second.substr(0, lenT - 1)
+			);
+		pair<string, string> sufpair = pair<string, string>(
+			kmerspair.first.substr(1, lenT - 1),
+			kmerspair.second.substr(1, lenT - 1)
+			);
+		int startIdx, endIdx;
+
+		if (!Belong2Pairs(prepair, *pairStrsNoRepeat, startIdx))
+		{
+			pairStrsNoRepeat->push_back(prepair);
+			startIdx = pairStrsNoRepeat->size() - 1;
+		}
+		if (!Belong2Pairs(sufpair, *pairStrsNoRepeat, endIdx))
+		{
+			pairStrsNoRepeat->push_back(sufpair);
+			endIdx = pairStrsNoRepeat->size() - 1;
+		}
+		adjMat.push_back(pair<int, int>(startIdx, endIdx));
+	}
+
+	return adjMat;
+}
+
+string StringReconstructionByPairedReads(int k, int d, PairedReadsChart* pairedReads)
+{
+	string Text;
+	PairedReadsChart pairStrsNoRepeat;
+	
+	// dB ¡û DeBruijn(Patterns)
+	GraphEdgeChart dB = deBruijnGraphFromPairs(pairedReads, &pairStrsNoRepeat);
+	
+	// matrix switch
+	NodeMappingChart nodeRoute(pairStrsNoRepeat.size(), vector<bool>(pairStrsNoRepeat.size(), false));
+	for (int i = 0; i < dB.size();i++)
+	{
+		nodeRoute[dB[i].first][dB[i].second] = true;
+	}
+
+	// path ¡û EulerianPath(dB)
+	vector<int> ePath = EulerianPath(&nodeRoute);
+
+	// PathToGenome
+	if (ePath.size() > 0)
+	{
+		Text.append(pairStrsNoRepeat[ePath[0]].first);
+	}
+	for (int i = 1; i < ePath.size(); i++)
+	{
+		Text.append(string(1, pairStrsNoRepeat[ePath[i]].first.at(k - 2)));
+	}
+	for (int i = 0; i < d + 1;i++)
+	{
+		Text.append(string(1, pairStrsNoRepeat[ePath[ePath.size() - d - 2 + i]].second.at(0)));
+	}
+	Text.append(pairStrsNoRepeat[ePath[ePath.size() - 1]].second);
+
+	return Text;
+}
+
+NodeDegreeChart GraphDegrees(GraphEdgeChart dB, int nodeNum)
+{
+	NodeDegreeChart degrees(nodeNum, pair<int, int>(0, 0));
+	// pair.first is node indegree num, pair.second is outdegree num
+	
+	for(int i=0; i < dB.size(); i++)
+	{
+		degrees[dB[i].first].second += 1;
+		degrees[dB[i].second].first += 1;
+	}
+
+	return degrees;
+}
+
+vector<string> GetBranches(GraphEdgeChart dB, vector<string>* patternStrsNoRepeat)
+{
+	vector<string> allPaths; // Paths ¡û empty list
+	
+	int nodeNum = patternStrsNoRepeat->size();
+	NodeDegreeChart nodeDegrees = GraphDegrees(dB, nodeNum);
+	for (int i = 0; i < nodeNum; i++)
+	{
+		if (nodeDegrees[i] == pair<int, int>(1, 1))
+		{
+			int nodeV = i, nodeW;
+			string isolatedStr = (*patternStrsNoRepeat)[nodeV];
+			while (true)
+			{
+				for (int j = 0; j < dB.size(); j++)
+				{
+					if (dB[j].first == nodeV)
+					{
+						nodeW = dB[j].second;
+						break;
+					}
+				}
+				if (nodeW>=i && nodeDegrees[nodeW] == pair<int, int>(1, 1))
+				{// nodeW>=i is to make sure the isolatedStr not repeat with the former nodes
+					isolatedStr = isolatedStr + (*patternStrsNoRepeat)[nodeW].back();
+				}
+				else
+				{
+					break;
+				}
+
+				if (nodeW == i)
+				{
+					allPaths.push_back(isolatedStr);
+					break;
+				}
+
+				nodeV = nodeW;
+			}
+
+		}
+		else // if v is not a 1-in-1-out node
+		{
+			int nodeV = i;
+			if (nodeDegrees[nodeV].second > 0) // if out(v) > 0
+			{
+				for (int j = 0; j < dB.size(); j++)
+				{
+					if (dB[j].first == nodeV)
+					{
+						int nodeW = dB[j].second;
+						string nonBranchingPath = (*patternStrsNoRepeat)[nodeV] + (*patternStrsNoRepeat)[nodeW].back();
+						while (nodeDegrees[nodeW] == pair<int, int>(1, 1))
+						{
+							int nodeU;
+							for (int m = 0; m < dB.size(); m++)
+							{
+								if (dB[m].first == nodeW)
+								{
+									nodeU = dB[m].second;
+									break;
+								}
+							}
+							nonBranchingPath = nonBranchingPath + (*patternStrsNoRepeat)[nodeU].back();
+							nodeW = nodeU;
+						}
+						allPaths.push_back(nonBranchingPath);
+					}
+				}
+			}
+		}
+	}
+	// for each isolated cycle Cycle in Graph
+
+
+	return allPaths;
+}
+
+vector<string> ContigGeneration(vector<string>* Patterns)
+{
+	// dB ¡û DeBruijn(Patterns)
+	vector<string> patternStrsNoRepeat;
+	vector<pair<int,int>> dB = deBruijnGraphPatterns(Patterns, &patternStrsNoRepeat);
+	// get branches of nodes
+	vector<string> contigs = GetBranches(dB, &patternStrsNoRepeat);
+
+	return contigs;
 }

@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
 	free(fileData);
 
 	// operation
-	vector<vector<bool>> adjMat = OverlapGraph(&patternStrs);
+	NodeMappingChart adjMat = OverlapGraph(&patternStrs);
 
 	// output file
 	char outputFullName[100];

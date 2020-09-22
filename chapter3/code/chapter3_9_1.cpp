@@ -11,15 +11,15 @@
 #include "functions.h"
 #include "mathtool.h"
 
-const char dataFileName[30] = "dataset_369270_8.txt";
+const char dataFileName[30] = "dataset_369274_16.txt";// "sample.txt";
 const char dataFilePath[40] = "E:/GitHub/yizhou-zhong/chapter3/data/";
-const char outputFileName[20] = "chapter3_5_1.txt";
+const char outputFileName[20] = "chapter3_9_1.txt";
 
 int main(int argc, char *argv[])
 {
-	vector<string> kmersPatterns;
+	vector<string> patternStrs;
 
-	//// load txt file
+	// load txt file
 	char fileFullName[100];
 	strcpy(fileFullName, dataFilePath);
 	strcat(fileFullName, dataFileName);
@@ -36,17 +36,27 @@ int main(int argc, char *argv[])
 			//
 			if (buf[0]!='\0')
 			{
-				kmersPatterns.push_back(buf);
+				patternStrs.push_back(buf);
 			}
 			//
 		}
 		infile.close();
 	}
+	int len = patternStrs.size()-1;
+	int sep = patternStrs[0].find(' ');
+	int k = stoi(patternStrs[0].substr(0, sep));
+	int d = stoi(patternStrs[0].substr(sep + 1, patternStrs[0].length()-sep-1));
+	
+	PairedReadsChart pairedReads;
+	for (int i = 0; i < len; i++)
+	{
+		int sepr = patternStrs[i + 1].find('|');
+		pairedReads.push_back(pair<string, string>(patternStrs[i + 1].substr(0, sepr),
+			patternStrs[i + 1].substr(sepr + 1, patternStrs[i+1].length() - sepr - 1)));
+	}
 
 	// operation
-	vector<string> patternStrs;
-	vector<string> patternStrsNoRepeat;
-	NodeMappingChart adjMat = deBruijnGraphPatterns(&kmersPatterns, &patternStrs, &patternStrsNoRepeat);
+	string Text = StringReconstructionByPairedReads(k, d, &pairedReads);
 
 	// output file
 	char outputFullName[100];
@@ -55,37 +65,8 @@ int main(int argc, char *argv[])
 
 	ofstream outfile(outputFullName);
 
-	int matY = adjMat.size();
-	int matX;
-	if (matY > 0)
-	{
-		matX = adjMat[0].size();
-	}
-	 
-	for (int i = 0; i < matY; i++)
-	{
-		bool adjexist = false;
-		for (int j = 0; j < matX; j++)
-		{
-			if (adjMat[i][j])
-			{
-				if (!adjexist)
-				{
-					outfile << patternStrsNoRepeat[i] << " -> ";
-					outfile << patternStrs[j];
-					adjexist = true;
-				}
-				else
-				{
-					outfile << ',' << patternStrs[j];
-				}
-			}
-		}
-		if (adjexist)
-		{
-			outfile << endl;
-		}
-	}
+	outfile << Text.c_str() << endl;
+	cout << Text.c_str() << endl;
 
 	outfile.close();
 	system("pause");

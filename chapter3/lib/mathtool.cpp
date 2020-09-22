@@ -35,3 +35,21 @@ int findPosition(vector<string>& in, string str)
 	}
 	return idx;
 }
+
+int findPositionPairs(vector<pair<string, string>>& in, 
+	pair<string, string> str)
+{
+	int idx = -1;
+	for (int i = 0; i < in.size(); i++)
+	{
+		if (
+			strcmp(in[i].first.c_str(), str.first.c_str()) == 0
+			&& strcmp(in[i].second.c_str(), str.second.c_str()) == 0
+			)
+		{
+			idx = i;
+			break;
+		}
+	}
+	return idx;
+}

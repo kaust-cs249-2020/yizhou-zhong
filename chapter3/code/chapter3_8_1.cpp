@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
 	// Translate the string to a graph, use a matrix to present
 	int nodeNum = eulerianGraph.size();
 	vector<string> nodeStr;
-	vector<vector<bool>> nodeRoute(nodeNum, vector<bool>(nodeNum, false));// this is the matrix of graph
+	NodeMappingChart nodeRoute(nodeNum, vector<bool>(nodeNum, false));// this is the matrix of graph
 	int edgeCount = 0;
 	
 	for (int i = 0; i < nodeNum; i++)
