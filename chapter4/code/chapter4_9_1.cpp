@@ -11,9 +11,9 @@
 #include "functions.h"
 #include "mathtool.h"
 
-const char dataFileName[30] = "dataset_369294_6.txt"; // "test.txt";
+const char dataFileName[30] = "dataset_369297_4.txt";// "test.txt";
 const char dataFilePath[40] = "E:/GitHub/yizhou-zhong/chapter4/data/";
-const char outputFileName[20] = "chapter4_6_2.txt";
+const char outputFileName[20] = "chapter4_9_1.txt";
 //const char tableFileName[30] = "RNA_codon_table_1.txt";
 const char massTableName[30] = "integer_mass_table.txt";
 
@@ -40,7 +40,6 @@ int main(int argc, char *argv[])
 		}
 		infile.close();
 	}
-
 	IntegerMassTable massTable;
 	for (int i = 0; i < massTableStr.size(); i++)
 	{
@@ -60,7 +59,7 @@ int main(int argc, char *argv[])
 	}
 	
 	// load txt file
-	string specStrs;
+	vector<string> patterns;
 	char fileFullName[100];
 	strcpy(fileFullName, dataFilePath);
 	strcat(fileFullName, dataFileName);
@@ -73,28 +72,27 @@ int main(int argc, char *argv[])
 			getline(infile, buf);
 			if (buf[0]!='\0')
 			{
-				specStrs = buf;
+				patterns.push_back(buf);
 			}
 		}
 		infile.close();
 	}
 
 	vector<int> specInt;
-	int lastIdx = 0;
-	int len = specStrs.length();
+	int lastIdx = 0, len = patterns[0].length();
 	for (int i = 0; i < len; i++)
 	{
-		if (specStrs[i] == ' ')
+		if (patterns[0][i] == ' ')
 		{
-			specInt.push_back(stoi(specStrs.substr(lastIdx, i-lastIdx)));
+			specInt.push_back(stoi(patterns[0].substr(lastIdx, i - lastIdx)));
 			lastIdx = i + 1;
 		}
 	}
-	specInt.push_back(stoi(specStrs.substr(lastIdx, len-lastIdx)));
+	specInt.push_back(stoi(patterns[0].substr(lastIdx, len - lastIdx)));
 
 	// operation
-	vector<string> finalPeptides = CyclopeptideSequencing(specInt, &massTable);
-	
+	vector<int> speConvol = SpectralConvolution(specInt);
+
 	// output file
 	char outputFullName[100];
 	strcpy(outputFullName, dataFilePath);
@@ -102,17 +100,14 @@ int main(int argc, char *argv[])
 
 	ofstream outfile(outputFullName);
 
-	for (int i = 0; i < finalPeptides.size(); i++)
+	for (int i = 0; i < speConvol.size();i++)
 	{
-		if (i == finalPeptides.size() - 1)
+		cout << speConvol[i];
+		outfile << speConvol[i];
+		if (i!=speConvol.size()-1)
 		{
-			outfile << finalPeptides[i] << endl;
-			cout << finalPeptides[i] << endl;
-		}
-		else
-		{
-			outfile << finalPeptides[i] << ' ';
-			cout << finalPeptides[i] << ' ';
+			cout << ' ';
+			outfile << ' ';
 		}
 	}
 

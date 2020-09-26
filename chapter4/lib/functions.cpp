@@ -1670,3 +1670,441 @@ vector<int> TheoreticalSpectrum(string peptide, IntegerMassTable* massTable)
 
 	return spec1;
 }
+
+bool Belong2PepValues(int pep, vector<int> pepValues)
+{
+	for (int i = 0; i < pepValues.size();i++)
+	{
+		if (pepValues[i] == pep)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Belong2PepValues(int pep, vector<int> pepValues, int& idx)
+{
+	for (int i = 0; i < pepValues.size(); i++)
+	{
+		if (pepValues[i] == pep)
+		{
+			idx = i;
+			return true;
+		}
+	}
+	return false;
+}
+
+int PepMass(string peptides, IntegerMassTable* massTable)
+{
+	int mass = 0, len = peptides.size();
+	IntegerMassTable::iterator massIter;
+	for (int i = 0; i < len; i++)
+	{
+		massIter = massTable->find(peptides[i]);
+		mass += massIter->second;
+	}
+	return mass;
+}
+
+vector<string> GetCandidate(int pepLen, vector<int> pepValues, IntegerMassTable* massTable)
+{
+	vector<string> peptide;
+	IntegerMassTable::iterator massIter;
+	if (pepLen <=0)
+	{
+		return peptide;
+	}
+	else if (pepLen==1)
+	{
+		for (massIter = massTable->begin(); massIter != massTable->end(); massIter++)
+		{
+			if (Belong2PepValues(massIter->second, pepValues))
+			{
+				peptide.push_back(string(1, massIter->first));
+			}
+		}
+		return peptide;
+	}
+	else
+	{
+		vector<string> prePeptide = GetCandidate(pepLen - 1, pepValues, massTable);
+		for (int i = 0; i < prePeptide.size(); i++)
+		{
+			for (massIter = massTable->begin(); massIter != massTable->end(); massIter++)
+			{
+				string temStr = string(1, massIter->first) + prePeptide[i];
+				if (Belong2PepValues(PepMass(temStr, massTable), pepValues))
+				{
+					peptide.push_back(temStr);
+				}
+			}
+		}
+		return peptide;
+	}
+}
+
+//bool SameSpec(vector<int> specInt, vector<int> specInt2)
+//{
+//	bool specsAreSame = false;
+//	if (specInt.size() != specInt2.size())
+//	{
+//		return specsAreSame;
+//	}
+//	for (int i = 0; i < specInt.size();i++)
+//	{
+//		if (specInt[i] != specInt2[i])
+//		{
+//			return specsAreSame;
+//		}
+//	}
+//	specsAreSame = true;
+//	return specsAreSame;
+//}
+
+string Pep2PepNumStr(string peptides, IntegerMassTable* massTable)
+{
+	string pepNumStr;
+	int len = peptides.length();
+	IntegerMassTable::iterator massIter;
+	for (int i = 0; i < len; i++)
+	{
+		massIter = massTable->find(peptides[i]);
+		pepNumStr = pepNumStr + to_string(massIter->second);
+		if (i!=len-1)
+		{
+			pepNumStr = pepNumStr + '-';
+		}
+	}
+	return pepNumStr;
+}
+
+vector<string> CyclopeptideSequencing(vector<int> specInt, IntegerMassTable* massTable)
+{
+	int specLen = specInt.size();
+	int peptidesLen = (1 + sqrt(4 * specLen - 7)) / 2;
+	
+	vector<string> candidatePeptides = GetCandidate(peptidesLen, specInt, massTable);
+	vector<string> finalPepNumStr;
+	for (long i = 0; i < candidatePeptides.size();i++)
+	{
+		if (PepMass(candidatePeptides[i], massTable) == specInt[specLen - 1])
+		{
+			vector<int> candidateSpecInt = TheoreticalSpectrum(candidatePeptides[i], massTable);
+			if (candidateSpecInt == specInt)
+			{
+				string pepNumStr = Pep2PepNumStr(candidatePeptides[i], massTable);
+				if (!Belong2Patterns(pepNumStr, finalPepNumStr))
+				{
+					finalPepNumStr.push_back(pepNumStr);
+				}
+			}
+		}
+	}
+
+	return finalPepNumStr;
+}
+
+int Score(string peptide, vector<int> specInt, IntegerMassTable* massTable)
+{
+	int pepScore=0;
+	vector<int> specIntCopy = specInt;
+	vector<int> cyclicSpec = TheoreticalSpectrum(peptide, massTable);
+	for (int i=0; i < cyclicSpec.size();i++)
+	{
+		int speNum = cyclicSpec[i];
+		int idx;
+		if (Belong2PepValues(speNum, specIntCopy, idx))
+		{
+			specIntCopy.erase(specIntCopy.begin() + idx);
+			pepScore++;
+		}
+	}
+
+	return pepScore;
+}
+
+int LinearScore(string peptide, vector<int> specInt, IntegerMassTable* massTable)
+{
+	int pepScore = 0;
+	vector<int> specIntCopy = specInt;
+	vector<int> cyclicSpec = LinearSpectrum(peptide, massTable);
+	for (int i = 0; i < cyclicSpec.size(); i++)
+	{
+		int speNum = cyclicSpec[i];
+		int idx;
+		if (Belong2PepValues(speNum, specIntCopy, idx))
+		{
+			specIntCopy.erase(specIntCopy.begin() + idx);
+			pepScore++;
+		}
+	}
+	return pepScore;
+}
+
+vector<string> Trim(vector<string> leaderboard, vector<int> specInt, int N, IntegerMassTable* massTable)
+{
+	vector<string> highScorePeptides;
+	int len = leaderboard.size();
+	vector<int> linearScores(len, 0);
+
+	for (int j = 0; j < len; j++)
+	{
+		string peptide = leaderboard[j];
+		linearScores[j] = LinearScore(peptide, specInt, massTable);
+	}
+	vector<int>	linearScoresSorted = linearScores;
+	vector<string> leaderboardCopy = leaderboard;
+	sort(linearScoresSorted.rbegin(), linearScoresSorted.rend());
+	for (int i = 0; i < len; i++)
+	{
+		int score = linearScoresSorted[i];
+		for (int j = 0; j < linearScores.size();j++)
+		{
+			if (score == linearScores[j])
+			{
+				highScorePeptides.push_back(leaderboardCopy[j]);
+				linearScores.erase(linearScores.begin() + j);
+				leaderboardCopy.erase(leaderboardCopy.begin() + j);
+				break;
+			}
+		}
+	}
+	for (int j = N; j < len;j++)
+	{
+		if (linearScoresSorted[j] < linearScoresSorted[N-1])
+		{
+			for (int i = j; i < len;i++)
+			{
+				highScorePeptides.erase(highScorePeptides.begin() + j);
+			}
+			return highScorePeptides;
+		}
+	}
+	return highScorePeptides;
+}
+
+vector<string> Expand(vector<string> peptides,
+	vector<int> spec,
+	IntegerMassTable* massTable)
+{
+	vector<string> expandedPep;
+	IntegerMassTable::iterator massIter;
+	int len = peptides.size();
+	for (int i = 0; i < len;i++)
+	{
+		for (massIter = massTable->begin(); massIter != massTable->end(); massIter++)
+		{
+			string tmppep = peptides[i] + massIter->first;
+			
+			if (Belong2PepValues(PepMass(tmppep, massTable), spec))
+			{
+				expandedPep.push_back(tmppep);
+			}
+		}
+	}
+	return expandedPep;
+}
+
+vector<string> Expand(vector<string> peptides,
+	vector<int> spec,
+	IntegerMassTable* massTable,
+	vector<int> aminoList)
+{
+	vector<string> expandedPep;
+	IntegerMassTable::iterator massIter;
+	int len = peptides.size();
+	for (int i = 0; i < len; i++)
+	{
+		for (massIter = massTable->begin(); massIter != massTable->end(); massIter++)
+		{
+			if (Belong2PepValues(massIter->second, aminoList))
+			{
+				string tmppep = peptides[i] + massIter->first;
+
+				if (Belong2PepValues(PepMass(tmppep, massTable), spec))
+				{
+					expandedPep.push_back(tmppep);
+				}
+			}
+			
+		}
+	}
+	return expandedPep;
+}
+
+string LeaderboardCyclopeptideSequencing(vector<int> specInt, int N, IntegerMassTable* massTable)
+{
+	vector<string> leaderboard(1, "");
+	string leaderpeptide;
+	int parentMass = specInt.back();
+
+	while (leaderboard.size() > 0)
+	{
+		leaderboard = Expand(leaderboard, specInt, massTable);
+		for (int i = 0; i < leaderboard.size(); i++)
+		{
+			string peptide = leaderboard[i];
+			if (PepMass(peptide, massTable) == parentMass)
+			{
+				int a = Score(leaderpeptide, specInt, massTable);
+				if (Score(peptide, specInt, massTable) > Score(leaderpeptide, specInt, massTable))
+				{
+					leaderpeptide = peptide;
+				}
+			}
+			else if (PepMass(peptide, massTable) > parentMass)
+			{
+				leaderboard.erase(leaderboard.begin() + i);
+				i--;
+			}
+		}
+		leaderboard = Trim(leaderboard, specInt, N, massTable);
+	}
+
+	string leaderPepValStr;
+	IntegerMassTable::iterator massIter;
+	for (int i = 0; i < leaderpeptide.length(); i++)
+	{
+		massIter = massTable->find(leaderpeptide[i]);
+		leaderPepValStr = leaderPepValStr + to_string(massIter->second);
+		if (i != leaderpeptide.length() - 1)
+		{
+			leaderPepValStr = leaderPepValStr + '-';
+		}
+	}
+
+	return leaderPepValStr;
+}
+
+string LeaderboardCyclopeptideSequencing(vector<int> specInt, 
+	int N, IntegerMassTable* massTable, 
+	vector<int> aminoList)
+{
+	vector<string> leaderboard(1, "");
+	string leaderpeptide;
+	int parentMass = specInt.back();
+
+	while (leaderboard.size()>0)
+	{
+		leaderboard = Expand(leaderboard, 
+			specInt, 
+			massTable, 
+			aminoList);
+		for (int i = 0; i < leaderboard.size();i++)
+		{
+			string peptide = leaderboard[i];
+			if (PepMass(peptide, massTable) == parentMass)
+			{
+				int a = Score(leaderpeptide, specInt, massTable);
+				if (Score(peptide, specInt, massTable) > Score(leaderpeptide, specInt, massTable))
+				{
+					leaderpeptide = peptide;
+				}
+			}
+			else if (PepMass(peptide, massTable) > parentMass)
+			{
+				leaderboard.erase(leaderboard.begin() + i);
+				i--;
+			}
+		}
+		leaderboard = Trim(leaderboard, specInt, N, massTable);
+	}
+
+	string leaderPepValStr;
+	IntegerMassTable::iterator massIter;
+	for (int i = 0; i < leaderpeptide.length();i++)
+	{
+		massIter = massTable->find(leaderpeptide[i]);
+		leaderPepValStr = leaderPepValStr + to_string(massIter->second);
+		if (i != leaderpeptide.length()-1)
+		{
+			leaderPepValStr = leaderPepValStr + '-';
+		}
+	}
+
+	return leaderPepValStr;
+}
+
+vector<int> SpectralConvolution(vector<int> specInt)
+{
+	vector<int> speConvol;
+	int len = specInt.size();
+
+	for (int m = 0; m < len; m++)
+	{
+		for (int n = 0; n < len;n++)
+		{
+			int diff = specInt[m] - specInt[n];
+			if (diff>0)
+			{
+				speConvol.push_back(diff);
+			}
+		}
+	}
+
+	return speConvol;
+}
+
+bool Belong2Vector(int a, CountTable aVec, int& idx)
+{
+	for (int i = 0; i < aVec.size();i++)
+	{
+		if (aVec[i].first == a)
+		{
+			idx = i;
+			return true;
+		}
+	}
+	return false;
+}
+
+CountTable CountedConvol(vector<int> specInt)
+{
+	vector<int> convolution = SpectralConvolution(specInt);
+	CountTable counted;
+
+	int len = convolution.size();
+	for (int i = 0; i < len;i++)
+	{
+		int d = convolution[i];
+		if (57<=d && d<=200)
+		{
+			int idx;
+			if (Belong2Vector(d, counted, idx))
+			{
+				counted[idx].second += 1;
+			}
+			else
+			{
+				counted.push_back(pair<int,int>(d,1));
+			}
+		}
+	}
+	sort(counted.begin(), counted.end(), cmp());
+
+	return counted;
+}
+
+string  ConvolutionCycPepSeq(int M, int N, vector<int> specInt, IntegerMassTable* massTable)
+{
+	CountTable counted = CountedConvol(specInt);
+	vector < int > convolution;
+
+	for (int i = 0; i < M; i++)
+	{
+		convolution.push_back(counted[i].first);
+	}
+
+	for (int i = M; i < counted.size();i++)
+	{
+		if (counted[i].second == counted[M].second)
+		{
+			convolution.push_back(counted[i].first);
+		}
+	}
+
+	string  leaderPeptide = LeaderboardCyclopeptideSequencing(specInt, N, massTable, convolution);
+	return leaderPeptide;
+}

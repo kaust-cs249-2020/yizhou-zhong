@@ -11,9 +11,9 @@
 #include "functions.h"
 #include "mathtool.h"
 
-const char dataFileName[30] = "dataset_369294_6.txt"; // "test.txt";
+const char dataFileName[30] = "dataset_369301_3.txt"; // "test.txt"; // "dataset_369295_3.txt";
 const char dataFilePath[40] = "E:/GitHub/yizhou-zhong/chapter4/data/";
-const char outputFileName[20] = "chapter4_6_2.txt";
+const char outputFileName[20] = "chapter4_13_2.txt";
 //const char tableFileName[30] = "RNA_codon_table_1.txt";
 const char massTableName[30] = "integer_mass_table.txt";
 
@@ -40,7 +40,6 @@ int main(int argc, char *argv[])
 		}
 		infile.close();
 	}
-
 	IntegerMassTable massTable;
 	for (int i = 0; i < massTableStr.size(); i++)
 	{
@@ -60,7 +59,7 @@ int main(int argc, char *argv[])
 	}
 	
 	// load txt file
-	string specStrs;
+	vector<string> patterns;
 	char fileFullName[100];
 	strcpy(fileFullName, dataFilePath);
 	strcat(fileFullName, dataFileName);
@@ -73,28 +72,44 @@ int main(int argc, char *argv[])
 			getline(infile, buf);
 			if (buf[0]!='\0')
 			{
-				specStrs = buf;
+				patterns.push_back(buf);
 			}
 		}
 		infile.close();
 	}
 
-	vector<int> specInt;
+	vector<string> leaderboard;
 	int lastIdx = 0;
-	int len = specStrs.length();
+	int len = patterns[0].length();
 	for (int i = 0; i < len; i++)
 	{
-		if (specStrs[i] == ' ')
+		if (patterns[0][i] == ' ')
 		{
-			specInt.push_back(stoi(specStrs.substr(lastIdx, i-lastIdx)));
+			leaderboard.push_back(patterns[0].substr(lastIdx, i - lastIdx));
 			lastIdx = i + 1;
 		}
 	}
-	specInt.push_back(stoi(specStrs.substr(lastIdx, len-lastIdx)));
+	leaderboard.push_back(patterns[0].substr(lastIdx, len - lastIdx));
+
+	vector<int> specInt;
+	lastIdx = 0;
+	len = patterns[1].length();
+	for (int i = 0; i < len; i++)
+	{
+		if (patterns[1][i] == ' ')
+		{
+			specInt.push_back(stoi(patterns[1].substr(lastIdx, i - lastIdx)));
+			lastIdx = i + 1;
+		}
+	}
+	specInt.push_back(stoi(patterns[1].substr(lastIdx, len - lastIdx)));
+
+	int N = stoi(patterns[2]);
 
 	// operation
-	vector<string> finalPeptides = CyclopeptideSequencing(specInt, &massTable);
-	
+	vector<string> highScoreLearders = Trim(leaderboard,
+		specInt, N, &massTable);
+
 	// output file
 	char outputFullName[100];
 	strcpy(outputFullName, dataFilePath);
@@ -102,17 +117,14 @@ int main(int argc, char *argv[])
 
 	ofstream outfile(outputFullName);
 
-	for (int i = 0; i < finalPeptides.size(); i++)
+	for (int i = 0; i < highScoreLearders.size();i++)
 	{
-		if (i == finalPeptides.size() - 1)
+		outfile << highScoreLearders[i];
+		cout << highScoreLearders[i];
+		if (i != highScoreLearders.size()-1)
 		{
-			outfile << finalPeptides[i] << endl;
-			cout << finalPeptides[i] << endl;
-		}
-		else
-		{
-			outfile << finalPeptides[i] << ' ';
-			cout << finalPeptides[i] << ' ';
+			outfile << ' ';
+			cout << ' ';
 		}
 	}
 

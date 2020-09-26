@@ -1,11 +1,12 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
-#include <string.h>
+#include <string>
 #include <fstream>
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <math.h>
 
 using namespace std;
 
@@ -16,6 +17,16 @@ typedef vector<pair<string, string>> PairedReadsChart;
 typedef vector<vector<bool>> NodeMappingChart;
 typedef map<string, string> GeneticCodeTable;
 typedef map<char, int> IntegerMassTable;
+typedef vector< pair<int, int> > CountTable;
+typedef pair<int, int> PAIR;
+
+struct cmp
+{
+	bool operator() (const PAIR& P1, const PAIR& P2)
+	{
+		return P1.second > P2.second;
+	}
+};
 
 int PatternCount(string* Text, string Pattern);
 
@@ -80,4 +91,20 @@ vector<string> PeptideEncoding(string dnaStr, string peptide, GeneticCodeTable* 
 vector<int> LinearSpectrum(string peptide, IntegerMassTable* massTable);
 
 vector<int> TheoreticalSpectrum(string peptide, IntegerMassTable* massTable);
+
+vector<string> CyclopeptideSequencing(vector<int> specInt, IntegerMassTable* massTable);
+
+int Score(string peptide, vector<int> specInt, IntegerMassTable* massTable);
+
+int LinearScore(string peptide, vector<int> specInt, IntegerMassTable* massTable);
+
+vector<string> Trim(vector<string> leaderboard, vector<int> specInt, int N, IntegerMassTable* massTable);
+
+string LeaderboardCyclopeptideSequencing(vector<int> specInt, int N, IntegerMassTable* massTable);
+
+string LeaderboardCyclopeptideSequencing(vector<int> specInt,
+	int N, IntegerMassTable* massTable,
+	const vector<int> aminoList = vector<int>());
+
+string  ConvolutionCycPepSeq(int M, int N, vector<int> specInt, IntegerMassTable* massTable);
 #endif
