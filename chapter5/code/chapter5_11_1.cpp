@@ -8,24 +8,24 @@
 #include <fstream>
 #include <vector>
 #include <map>
+#include <sstream>
 #include "functions.h"
 #include "mathtool.h"
 
-const char dataFileName[30] = "dataset_369313_10.txt";// "test.txt";
+const char dataFileName[30] = "dataset_369319_3.txt";// "test.txt";
 const char dataFilePath[40] = "E:/GitHub/yizhou-zhong/chapter5/data/";
-const char outputFileName[20] = "chapter5_5_1.txt";
+const char outputFileName[20] = "chapter5_11_1.txt";
 
 int main(int argc, char *argv[])
 {
 	string buf;
 	ifstream infile;
-	
+
 	// load txt file
 	vector<string> patterns;
 	char fileFullName[100];
 	strcpy(fileFullName, dataFilePath);
 	strcat(fileFullName, dataFileName);
-	
 	infile.open(fileFullName);
 	if (infile.is_open())
 	{
@@ -39,32 +39,20 @@ int main(int argc, char *argv[])
 		}
 		infile.close();
 	}
-
-	vector<int> Coins;
-	int lastIdx = 0, len = patterns[1].length();
-	for (int i = 0; i < len; i++)
-	{
-		if (patterns[1][i] == ',')
-		{
-			Coins.push_back(stoi(patterns[1].substr(lastIdx, i - lastIdx)));
-			lastIdx = i + 1;
-		}
-	}
-	Coins.push_back(stoi(patterns[1].substr(lastIdx, len - lastIdx)));
-	int money = stoi(patterns[0]);
+	string str1, str2;
+	str1 = patterns[0];
+	str2 = patterns[1];
 
 	// operation
-	int minCoinNum = DPChange(money, Coins);
+	int editDis = EditDistanceProblem(str1, str2);
 
 	// output file
 	char outputFullName[100];
 	strcpy(outputFullName, dataFilePath);
 	strcat(outputFullName, outputFileName);
-
 	ofstream outfile(outputFullName);
-
-	cout << minCoinNum << endl;
-	outfile << minCoinNum << endl;
+	cout << editDis << endl;
+	outfile << editDis << endl;
 
 	outfile.close();
 	system("pause");

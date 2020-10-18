@@ -121,4 +121,28 @@ vector<int>  TopologicalOrdering(vector<int> nodes, CountTable adjList);
 
 vector<int> LongestPathinDag(int graphStartNode, int graphEndNode,
 	vector<int> nodes, vector<int> weightList, CountTable adjList, int& longestPathLen);
+
+vector<string> GlobalAlignProblem(string strV, string strW,
+	string scoringChar, vector<vector<int>> scoringMat, int sigma, int& scoreMax);
+
+vector<string> LoaclAlignProblem(string strV, string strW,
+	string scoringChar, vector<vector<int>> scoringMat, int sigma, int& scoreMax);
+
+int EditDistanceProblem(string strV, string strW);
+
+vector<string> FittingAlignmentProblem(string strV, string strW, int& highestScore);
+
+vector<string> OverlapAlignmentProblem(string strV, string strW, int& highestScore);
+
+vector<string> AffineGapPenaltiesProblem(string strV, string strW,
+	string scoringChar, vector<vector<int>> scoringMat, int& scoreMax);
+
+vector<string> MultipleLstCommonSubseqProblem(string strV, string strW, string strU, int& scoreMax);
+
+vector<PAIR> MidEdgeLinearSpaceProblem(string strV, string strW,
+	string scoringChar, vector<vector<int>> scoringMat, int sigma);
+
+vector<string> LinearSpaceAlignment(string strV, string strW,
+	string scoringChar, vector<vector<int>> scoringMat,
+	int sigma, int& score);
 #endif

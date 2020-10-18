@@ -2349,3 +2349,655 @@ vector<int> LongestPathinDag(int graphStartNode, int graphEndNode,
 
 	return longestPath;
 }
+
+vector<string> GlobalAlignProblem(string strV, string strW,
+	string scoringChar, vector<vector<int>> scoringMat, int sigma, int& scoreMax)
+{
+	int vLen = strV.length();
+	int wLen = strW.length();
+	vector<vector<int>> pathLenMat(vLen+1, vector<int>(wLen+1, 0));
+	vector<string> backTrack(vLen+1, string(wLen+1, ' '));
+	for (int i = 1; i < vLen + 1; i++)
+	{
+		pathLenMat[i][0] = -i*sigma;
+	}
+	for (int i = 1; i < wLen + 1; i++)
+	{
+		pathLenMat[0][i] = -i*sigma;
+	}
+
+	for (int i = 1; i < vLen + 1;i++)
+	{
+		for (int j = 1; j < wLen + 1;j++)
+		{
+			int idx1 = scoringChar.find(strV.at(i-1));
+			int idx2 = scoringChar.find(strW.at(j-1));
+			int match = scoringMat[idx1][idx2];
+			vector<int> tmp;
+			tmp.push_back(pathLenMat[i-1][j]-sigma);
+			tmp.push_back(pathLenMat[i][j-1]-sigma);
+			tmp.push_back(pathLenMat[i - 1][j - 1] + match);
+			int idxTmp;
+			pathLenMat[i][j] = findMax(tmp, 3, idxTmp);
+			switch (idxTmp)
+			{
+			case 0:
+				backTrack[i][j] = 'd';
+				break;
+			case 1:
+				backTrack[i][j] = 'r';
+				break;
+			default:
+				backTrack[i][j] = 'c';
+			}
+
+		}
+	}
+	scoreMax = pathLenMat[vLen][wLen];
+
+	string strVback = strV, strWback = strW;
+	int i = vLen, j = wLen;
+	while (i!=0 && j!=0)
+	{
+		if (backTrack[i][j]=='d')
+		{
+			i--;
+			strWback = strWback.substr(0, j) + string(1, '-') + strWback.substr(j, strWback.length() - j);
+		}
+		else if (backTrack[i][j] == 'r')
+		{
+			j--;
+			strVback = strVback.substr(0, i) + string(1, '-') + strVback.substr(i, strVback.length() - i);
+		}
+		else
+		{
+			i--;
+			j--;
+		}
+	}
+	for (int m = 0; m < i;m++)
+	{
+		strWback = string(1, '-') + strWback;
+	}
+	for (int n = 0; n < j;n++)
+	{
+		strVback = string(1, '-') + strVback;
+	}
+
+	vector<string> outputStr;
+	outputStr.push_back(strVback);
+	outputStr.push_back(strWback);
+	return outputStr;
+}
+
+vector<string> LoaclAlignProblem(string strV, string strW,
+	string scoringChar, vector<vector<int>> scoringMat, int sigma, int& scoreMax)
+{
+	int vLen = strV.length();
+	int wLen = strW.length();
+	vector<vector<int>> pathLenMat(vLen + 1, vector<int>(wLen + 1, 0));
+	vector<string> backTrack(vLen + 1, string(wLen + 1, ' '));
+
+	for (int i = 1; i < vLen + 1;i++)
+	{
+		for (int j = 1; j < wLen + 1;j++)
+		{
+			int idx1 = scoringChar.find(strV.at(i - 1));
+			int idx2 = scoringChar.find(strW.at(j - 1));
+			int match = scoringMat[idx1][idx2];
+			vector<int> tmp;
+			tmp.push_back(pathLenMat[i - 1][j] - sigma);
+			tmp.push_back(pathLenMat[i][j - 1] - sigma);
+			tmp.push_back(pathLenMat[i - 1][j - 1] + match);
+			tmp.push_back(0);
+			int idxTmp;
+			pathLenMat[i][j] = findMax(tmp, 4, idxTmp);
+			switch (idxTmp)
+			{
+			case 0:
+				backTrack[i][j] = 'd';
+				break;
+			case 1:
+				backTrack[i][j] = 'r';
+				break;
+			case 2:
+				backTrack[i][j] = 'c';
+				break;
+			default:
+				backTrack[i][j] = 'T';
+			}
+		}
+	}
+
+	int i, j;
+	scoreMax = findMaxOfMat(pathLenMat, i, j);
+	string strVback = strV.substr(0, i);
+	string strWback = strW.substr(0, j);
+	while (backTrack[i][j]!='T' && i != 0 && j != 0)
+	{
+		if (backTrack[i][j] == 'd')
+		{
+			i--;
+			strWback = strWback.substr(0, j) + string(1, '-') + strWback.substr(j, strWback.length() - j);
+		}
+		else if (backTrack[i][j] == 'r')
+		{
+			j--;
+			strVback = strVback.substr(0, i) + string(1, '-') + strVback.substr(i, strVback.length() - i);
+		}
+		else
+		{
+			i--;
+			j--;
+		}
+	}
+
+	strVback = strVback.substr(i, strVback.length()-i);
+	strWback = strWback.substr(j, strWback.length() - j);
+	vector<string> outputStr;
+	outputStr.push_back(strVback);
+	outputStr.push_back(strWback);
+	return outputStr;
+}
+
+int EditDistanceProblem(string strV, string strW)
+{
+	int vLen = strV.length();
+	int wLen = strW.length();
+	vector<vector<int>> editDisMat(vLen + 1, vector<int>(wLen + 1, 0));
+	for (int i = 1; i < vLen + 1;i++)
+	{
+		editDisMat[i][0] = i;
+	}
+	for (int i = 1; i < wLen + 1;i++)
+	{
+		editDisMat[0][i] = i;
+	}
+
+	for (int i = 1; i < vLen + 1;i++)
+	{
+		for (int j = 1; j < wLen + 1;j++)
+		{
+			if (strV.at(i-1)==strW.at(j-1))
+			{
+				editDisMat[i][j] = editDisMat[i - 1][j - 1];
+			}
+			else
+			{
+				vector<int> tmp;
+				tmp.push_back(editDisMat[i - 1][j] + 1);
+				tmp.push_back(editDisMat[i][j - 1] + 1);
+				tmp.push_back(editDisMat[i - 1][j - 1] + 1);
+				editDisMat[i][j] = findMin(tmp, 3);
+			}
+		}
+	}
+	return editDisMat[vLen][wLen];
+}
+
+vector<string> FittingAlignmentProblem(string strV, string strW, int& scoreMax)
+{
+	int vLen = strV.length();
+	int wLen = strW.length();
+	vector<vector<int>> scoreMat(vLen + 1, vector<int>(wLen + 1, 0));
+	vector<string> backTrack(vLen + 1, string(wLen + 1, ' '));
+	for (int i = 1; i < vLen + 1;i++)
+	{
+		for (int j = 1; j < wLen + 1;j++)
+		{
+			int match = -1;
+			if (strV.at(i-1)==strW.at(j-1))
+			{
+				match = 1;
+			}
+			vector<int> tmp;
+			tmp.push_back(scoreMat[i - 1][j] - 1);
+			tmp.push_back(scoreMat[i][j - 1] - 1);
+			tmp.push_back(scoreMat[i - 1][j - 1] + match);
+			int idxTmp;
+			scoreMat[i][j] = findMax(tmp, 3, idxTmp);
+			switch (idxTmp)
+			{
+			case 0:
+				backTrack[i][j] = 'd';
+				break;
+			case 1:
+				backTrack[i][j] = 'r';
+				break;
+			default:
+				backTrack[i][j] = 'c';
+			}
+		}
+	}
+
+	int j = wLen;
+	int i;
+	scoreMax = findMaxOfCol(scoreMat, j, i);
+
+	string strVback = strV.substr(0, i);
+	string strWback = strW.substr(0, j);
+
+	while (i!=0 && j!=0)
+	{
+		if (backTrack[i][j]=='d')
+		{
+			i--;
+			strWback = strWback.substr(0, j) + string(1, '-') + strWback.substr(j, strWback.length() - j);
+		}
+		else if (backTrack[i][j]=='r')
+		{
+			j--;
+			strVback = strVback.substr(0, i) + string(1, '-') + strVback.substr(i, strVback.length() - i);
+		}
+		else
+		{
+			i--;
+			j--;
+		}
+	}
+
+	strVback = strVback.substr(i, strVback.length() - i);
+	vector<string> outputStr;
+	outputStr.push_back(strVback);
+	outputStr.push_back(strWback);
+	return outputStr;
+}
+
+vector<string> OverlapAlignmentProblem(string strV, string strW, int& scoreMax)
+{
+	PAIR idxScoreMax = PAIR(-1, -1);
+	scoreMax = INT_MIN;
+	int vLen = strV.length();
+	int wLen = strW.length();
+	vector<vector<int>> scoreMat(vLen + 1, vector<int>(wLen + 1, 0));
+	vector<string> backTrack(vLen + 1, string(wLen + 1, ' '));
+	for (int i = 1; i < vLen + 1; i++)
+	{
+		for (int j = 1; j < wLen + 1; j++)
+		{
+			int match = -2;
+			if (strV.at(i - 1) == strW.at(j - 1))
+			{
+				match = 1;
+			}
+			vector<int> tmp;
+			tmp.push_back(scoreMat[i - 1][j] - 2);
+			tmp.push_back(scoreMat[i][j - 1] - 2);
+			tmp.push_back(scoreMat[i - 1][j - 1] + match);
+			int idxTmp;
+			scoreMat[i][j] = findMax(tmp, 3, idxTmp);
+
+			if (i==vLen || j==wLen)
+			{
+				if (scoreMat[i][j]>=scoreMax)
+				{
+					scoreMax = scoreMat[i][j];
+					idxScoreMax.first = i;
+					idxScoreMax.second = j;
+				}
+			}
+
+			switch (idxTmp)
+			{
+			case 0:
+				backTrack[i][j] = 'd';
+				break;
+			case 1:
+				backTrack[i][j] = 'r';
+				break;
+			default:
+				backTrack[i][j] = 'c';
+			}
+		}
+	}
+
+	int i = idxScoreMax.first;
+	int j = idxScoreMax.second;
+	string strVback = strV.substr(0, i);
+	string strWback = strW.substr(0, j);
+
+	while (i != 0 && j != 0)
+	{
+		if (backTrack[i][j] == 'd')
+		{
+			i--;
+			strWback = strWback.substr(0, j) + string(1, '-') + strWback.substr(j, strWback.length() - j);
+		}
+		else if (backTrack[i][j] == 'r')
+		{
+			j--;
+			strVback = strVback.substr(0, i) + string(1, '-') + strVback.substr(i, strVback.length() - i);
+		}
+		else
+		{
+			i--;
+			j--;
+		}
+	}
+
+	strVback = strVback.substr(i, strVback.length() - i);
+	strWback = strWback.substr(j, strWback.length() - j);
+
+	vector<string> outputStr;
+	outputStr.push_back(strVback);
+	outputStr.push_back(strWback);
+	return outputStr;
+}
+
+vector<string> AffineGapPenaltiesProblem(string strV, string strW,
+	string scoringChar, vector<vector<int>> scoringMat, int& scoreMax)
+{
+	int gapOpening = 11, gapExtension=1;
+	int vLen = strV.length();
+	int wLen = strW.length();
+	vector<vector<int>> lowerMat(vLen + 1, vector<int>(wLen + 1, 0));
+	vector<vector<int>> upperMat(vLen + 1, vector<int>(wLen + 1, 0));
+	vector<vector<int>> midMat(vLen + 1, vector<int>(wLen + 1, 0));
+	vector<string> backTrack(vLen + 1, string(wLen + 1, ' '));
+
+	for (int i = 1; i < vLen + 1; i++)
+	{
+		for (int j = 1; j < wLen + 1;j++)
+		{
+			int idx1 = scoringChar.find(strV.at(i - 1));
+			int idx2 = scoringChar.find(strW.at(j-1));
+			int match = scoringMat[idx1][idx2];
+			lowerMat[i][j] = findMaxOf2(lowerMat[i - 1][j] - gapExtension, midMat[i - 1][j] - gapOpening);
+			upperMat[i][j] = findMaxOf2(upperMat[i][j - 1] - gapExtension, midMat[i][j - 1] - gapOpening);
+			vector<int> tmp;
+			tmp.push_back(lowerMat[i][j]);
+			tmp.push_back(upperMat[i][j]);
+			tmp.push_back(midMat[i - 1][j - 1] + match);
+			int idxTmp;
+			midMat[i][j] = findMax(tmp, 3, idxTmp);
+			switch (idxTmp)
+			{
+			case 0:
+				backTrack[i][j] = 'd';
+				break;
+			case 1:
+				backTrack[i][j] = 'r';
+				break;
+			default:
+				backTrack[i][j] = 'c';
+			}
+		}
+	}
+
+	scoreMax = midMat[vLen][wLen];
+	int i = vLen;
+	int j = wLen;
+	string strVback = strV;
+	string strWback = strW;
+	while (i!=0 && j!=0)
+	{
+		if (backTrack[i][j]=='d')
+		{
+			i--;
+			strWback = strWback.substr(0, j) + string(1, '-') + strWback.substr(j, strWback.length() - j);
+		}
+		else if (backTrack[i][j]=='r')
+		{
+			j--;
+			strVback = strVback.substr(0, i) + string(1, '-') + strVback.substr(i, strVback.length() - i);
+		}
+		else
+		{
+			i--;
+			j--;
+		}
+	}
+	vector<string> outputStrs;
+	outputStrs.push_back(strVback);
+	outputStrs.push_back(strWback);
+	return outputStrs;
+}
+
+vector<string> MultipleLstCommonSubseqProblem(string strV, string strW, string strU, int& scoreMax)
+{
+	int matches = 1, miasmatches = 0, sigma=0;
+	
+	int vLen = strV.length();
+	int wLen = strW.length();
+	int uLen = strU.length();
+
+	vector<vector<vector<int>>> scoreMat(vLen + 1, vector<vector<int>>(wLen + 1, vector<int>(uLen+1, 0)));
+	vector<vector<vector<int>>> backTrackInt(vLen + 1, vector<vector<int>>(wLen + 1, vector<int>(uLen + 1, 0)));
+
+	for (int i = 1; i < vLen + 1;i++)
+	{
+		for (int j = 1; j < wLen + 1;j++)
+		{
+			for (int k = 1; k < uLen + 1;k++)
+			{
+				int m = (strV.at(i - 1) == strW.at(j - 1) && strW.at(j - 1) == strU.at(k - 1)) ? matches : -miasmatches;
+				vector<int> tmp;
+				tmp.push_back(scoreMat[i - 1][j][k] - sigma);
+				tmp.push_back(scoreMat[i][j - 1][k] - sigma);
+				tmp.push_back(scoreMat[i][j][k - 1] - sigma);
+				tmp.push_back(scoreMat[i - 1][j][k - 1]);
+				tmp.push_back(scoreMat[i][j - 1][k - 1] - sigma);
+				tmp.push_back(scoreMat[i - 1][j - 1][k]);
+				tmp.push_back(scoreMat[i - 1][j - 1][k - 1] + m);
+				scoreMat[i][j][k] = findMax(tmp, 7, backTrackInt[i][j][k]);
+			}
+		}
+	}
+	scoreMax = scoreMat[vLen][wLen][uLen];
+	int i = vLen, j = wLen, k = uLen;
+	string strVback = strV;
+	string strWback = strW;
+	string strUback = strU;
+	while (i!=0&&j!=0&&k!=0)
+	{
+		switch (backTrackInt[i][j][k])
+		{
+		case 0:
+			i--;
+			strWback = strWback.substr(0, j) + string(1, '-') + strWback.substr(j, strWback.length() - j);
+			strUback = strUback.substr(0, k) + string(1, '-') + strUback.substr(k, strUback.length() - k);
+			break;
+		case 1:
+			j--;
+			strVback = strVback.substr(0, i) + string(1, '-') + strVback.substr(i, strVback.length() - i);
+			strUback = strUback.substr(0, k) + string(1, '-') + strUback.substr(k, strUback.length() - k);
+			break;
+		case 2:
+			k--;
+			strVback = strVback.substr(0, i) + string(1, '-') + strVback.substr(i, strVback.length() - i);
+			strWback = strWback.substr(0, j) + string(1, '-') + strWback.substr(j, strWback.length() - j);
+			break;
+		case 3:
+			i--;
+			k--;
+			strWback = strWback.substr(0, j) + "-" + strWback.substr(j, strWback.length() - j);
+			break;
+		case 4:
+			j--;
+			k--;
+			strVback = strVback.substr(0, i) + "-" + strVback.substr(i, strVback.length() - i);
+			break;
+		case 5:
+			i--;
+			j--;
+			strUback = strUback.substr(0, k) + "-" + strUback.substr(k, strUback.length() - k);
+		default:
+			i--;
+			j--;
+			k--;
+			break;
+		}
+	}
+	vector<int> tmp2;
+	tmp2.push_back(i); tmp2.push_back(j); tmp2.push_back(k);
+	int maxLen = findMax(tmp2, 3);
+
+	for (int m = i; m < maxLen;m++)
+	{
+		strVback = "-" + strVback;
+	}
+	for (int m = j; m < maxLen;m++)
+	{
+		strWback = "-" + strWback;
+	}
+	for (int m = k; m < maxLen;m++)
+	{
+		strUback = "-" + strUback;
+	}
+
+	vector<string> outputStr;
+	outputStr.push_back(strVback);
+	outputStr.push_back(strWback);
+	outputStr.push_back(strUback);
+	return outputStr;
+}
+
+vector<PAIR> MidEdgeLinearSpaceProblem(string strV, string strW,
+	string scoringChar, vector<vector<int>> scoringMat, int sigma)
+{
+	int vLen = strV.length();
+	int wLen = strW.length()/2;
+
+	vector<vector<int>> scoreMat(vLen + 1, vector<int>(wLen + 1, 0));
+	vector<string> backTrack(vLen + 1, string(wLen + 1, ' '));
+	for (int i = 1; i < vLen + 1; i++)
+	{
+		scoreMat[i][0] = scoreMat[i-1][0]-sigma;
+	}
+	for (int j = 1; j < wLen + 1; j++)
+	{
+		scoreMat[0][j] = scoreMat[0][j-1]-sigma;
+	}
+	for (int i = 1; i < vLen + 1;i++)
+	{
+		for (int j = 1; j < wLen + 1;j++)
+		{
+			int idx1 = scoringChar.find(strV.at(i - 1));
+			int idx2 = scoringChar.find(strW.at(j - 1));
+			int match = scoringMat[idx1][idx2];
+			vector<int> tmp;
+			tmp.push_back(scoreMat[i - 1][j] - sigma);
+			tmp.push_back(scoreMat[i][j - 1] - sigma);
+			tmp.push_back(scoreMat[i - 1][j - 1] + match);
+			int idxTmp;
+			scoreMat[i][j] = findMax(tmp, 3, idxTmp);
+			switch (idxTmp)
+			{
+			case 0:
+				backTrack[i][j] = 'r';
+				break;
+			case 1:
+				backTrack[i][j] = 'd';
+				break;
+			default:
+				backTrack[i][j] = 'c';
+				break;
+			}
+		}
+	}
+
+	int j = wLen;
+	int i;
+	findMaxOfCol(scoreMat, j, i);
+	vector<PAIR> outputPairs;
+	outputPairs.push_back(PAIR(i, j));
+	switch (backTrack[i][j])
+	{
+	case 'r':
+		outputPairs.push_back(PAIR(i+1, j));
+		break;
+	case 'd':
+		outputPairs.push_back(PAIR(i, j + 1));
+		break;
+	default:
+		outputPairs.push_back(PAIR(i+1, j + 1));
+		break;
+	}
+
+	return outputPairs;
+}
+
+vector<string> LinearSpaceAlignment(string strV, string strW,
+	string scoringChar, vector<vector<int>> scoringMat,
+	int sigma, int& score)
+{
+	/*int lenV = strV.length();
+	int lenW = strW.length();
+	vector<vector<int>> s(lenV + 1, vector<int>(lenW+1, 0));
+	vector<string> backTrack(lenV + 1, string(lenW + 1, ' '));
+
+	for (int i = 1; i < lenV + 1;i++)
+	{
+		s[i][0] = s[i - 1][0]-sigma;
+	}
+	for (int j = 1; j < lenW;j++)
+	{
+		s[0][j] = s[0][j - 1] - sigma;
+	}
+
+	for (int i = 1; i < lenV + 1;i++)
+	{
+		for (int j = 1; j < lenW + 1;j++)
+		{
+			int idx1 = scoringChar.find(strV.at(i - 1));
+			int idx2 = scoringChar.find(strW.at(j - 1));
+			int match = scoringMat[idx1][idx2];
+			vector<int> tmp;
+			tmp.push_back(s[i - 1][j] - sigma);
+			tmp.push_back(s[i][j-1] - sigma);
+			tmp.push_back(s[i - 1][j-1] + match);
+			int idxTmp;
+			s[i][j] = findMax(tmp, 3, idxTmp);
+			switch (idxTmp)
+			{
+			case 0:
+				backTrack[i][j] = 'r';
+				break;
+			case 1:
+				backTrack[i][j] = 'd';
+				break;
+			default:
+				backTrack[i][j] = 'c';
+				break;
+			}
+		}
+	}
+	score = s[lenV][lenW];
+
+	int i = lenV;
+	int j = lenW;
+	string strVback = strV;
+	string strWback = strW;
+	while (i!=0 && j!=0)
+	{
+		if (backTrack[i][j] == 'd')
+		{
+			i--;
+			strWback = strWback.substr(0, j) + string(1, '-') + strWback.substr(j, strWback.length() - j);
+		}
+		else if (backTrack[i][j] == 'r')
+		{
+			j--;
+			strVback = strVback.substr(0, i) + string(1, '-') + strVback.substr(i, strVback.length() - i);
+		}
+		else
+		{
+			i--;
+			j--;
+		}
+	}
+
+	for (int m = i; m < lenV; m++)
+	{
+		strVback = "-" + strVback;
+	}
+	for (int m = j; m < lenW; m++)
+	{
+		strWback = "-" + strWback;
+	}
+
+	vector<string> outputStrs;
+	outputStrs.push_back(strVback);
+	outputStrs.push_back(strWback);
+	return outputStrs;*/
+}
