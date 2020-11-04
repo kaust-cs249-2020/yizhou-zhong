@@ -3,6 +3,112 @@
 #include <cstdlib>
 #include <iostream>
 
+class TREE
+{
+public:
+	TREE()
+	{
+		this->N = 0;
+		this->bidirectional = true;
+	}
+
+	void HalfLink(int a, int b, int weight=1)
+	{
+		if (!Belong2PepValues(a, this->nodes))
+		{
+			this->nodes.push_back(a);
+		}
+		map<int, vector<PAIR>>::iterator edgeIter;
+		edgeIter = this->edges.find(a);
+		if (edgeIter==this->edges.end())
+		{
+			vector<PAIR> tmp = vector<PAIR>(1, PAIR(b, weight));
+			this->edges.insert(pair<int, vector<PAIR>>(a, tmp));
+		}
+		else
+		{
+			vector<PAIR> tmp = edgeIter->second;
+			for (int i = 0; i < tmp.size();i++)
+			{
+				if (tmp[i].first == b)
+				{
+					tmp.erase(tmp.begin() + i);
+					i--;
+				}
+			}
+			tmp.push_back(PAIR(b, weight));
+			edgeIter->second = tmp;
+		}
+	}
+
+	void Link(int start, int end, int weight=1)
+	{
+		this->HalfLink(start, end, weight);
+		if (this->bidirectional)
+		{
+			this->HalfLink(end, start, weight);
+		}
+	}
+
+	void HalfUnlink(int a, int b)
+	{
+		map<int, vector<PAIR>>::iterator edgeIter;
+		edgeIter = this->edges.find(a);
+		vector<PAIR> links=edgeIter->second;
+		for (int i = 0; i < links.size();i++)
+		{
+			if (links[i].first==b)
+			{
+				links.erase(links.begin() + i);
+				i--;
+			}
+		}
+		if (links.size() < edgeIter->second.size())
+		{
+			edgeIter->second = links;
+		}
+	}
+
+	void Unlink(int i, int k)
+	{
+		this->HalfUnlink(i, k);
+		if (this->bidirectional)
+		{
+			this->HalfUnlink(k, i);
+		}
+	}
+
+	int NumNodes()
+	{
+		return this->nodes.size();
+	}
+
+	void RemoveBackwardLinks(int root)
+	{
+		this->bidirectional = false;
+		map<int, vector<PAIR>>::iterator edgeIter;
+		edgeIter = edges.find(root);
+		vector<PAIR> tmp = edgeIter->second;
+		for (int i = 0; i < tmp.size();i++)
+		{
+			int child = tmp[i].first;
+			this->HalfUnlink(child, root);
+			this->RemoveBackwardLinks(child);
+		}
+	}
+
+	void NodesSort()
+	{
+		sort(this->nodes.begin(), this->nodes.end());
+	}
+
+public:
+	vector<int> nodes;
+	map<int, vector<PAIR>> edges;
+	bool bidirectional;
+	int N;
+};
+
 int PatternCount(string* Text, string Pattern)
 {
 	int pCount = 0;
@@ -1669,31 +1775,6 @@ vector<int> TheoreticalSpectrum(string peptide, IntegerMassTable* massTable)
 	sort(spec1.begin(), spec1.end());
 
 	return spec1;
-}
-
-bool Belong2PepValues(int pep, vector<int> pepValues)
-{
-	for (int i = 0; i < pepValues.size();i++)
-	{
-		if (pepValues[i] == pep)
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-bool Belong2PepValues(int pep, vector<int> pepValues, int& idx)
-{
-	for (int i = 0; i < pepValues.size(); i++)
-	{
-		if (pepValues[i] == pep)
-		{
-			idx = i;
-			return true;
-		}
-	}
-	return false;
 }
 
 int PepMass(string peptides, IntegerMassTable* massTable)
@@ -3462,4 +3543,280 @@ vector<PAIR> SharedKmersProblem(int k, string seq1, string seq2)
 		}
 	}
 	return sharedKmers;
+}
+
+int findSumOfCost(map<PAIR, int>& in)
+{
+	int sum = 0;
+	map<PAIR, int>::iterator inIter;
+	for (inIter = in.begin(); inIter != in.end();inIter++)
+	{
+		sum += inIter->second;
+	}
+	return sum;
+}
+
+void DepthFirst(vector<int> nodes, CountTable adjList, vector<int> weightList, vector<int> leaves,
+	int leafnode, int leafnextnode, vector<int>& visited, 
+	map<PAIR, int>& cost, vector<PATH>& visitPaths)
+{
+	map<PAIR, int>::iterator costIter;
+	if (!Belong2PepValues(leafnextnode, visited))
+	{
+		visited.push_back(leafnextnode);
+		for (int i = 0; i < adjList.size(); i++)
+		{
+			if (nodes[adjList[i].first] == leafnode &&
+				nodes[adjList[i].second] == leafnextnode)
+			{
+				cost.insert(pair<PAIR, int>(PAIR(leafnode, leafnextnode), weightList[i]));
+			}
+		}
+		if (Belong2PepValues(leafnextnode, leaves))
+		{
+			PATH onePath;
+			onePath.nextNode = leafnextnode;
+			onePath.nodeList = vector<int>(visited.begin() + 1, visited.end());
+			onePath.costSum = findSumOfCost(cost);
+			visitPaths.push_back(onePath);
+		}
+		for (int i = 0; i < adjList.size();i++)
+		{
+			if (nodes[adjList[i].first] == leafnextnode)
+			{
+				int n = nodes[adjList[i].second];
+				DepthFirst(nodes, adjList, weightList, leaves,
+					leafnextnode, n, visited,
+					cost, visitPaths);
+			}
+		}
+		int idx;
+		Belong2PepValues(leafnextnode, visited, idx);
+		visited.erase(visited.begin()+idx);
+		costIter = cost.find(PAIR(leafnode, leafnextnode));
+		costIter->second = 0;
+	}
+	if (visitPaths.size()>0)
+	{
+		sort(visitPaths.begin(), visitPaths.end(), pathcmp());
+	}
+}
+
+vector<vector<int>> DistanceBetweenLeaves(int n, 
+	vector<int> nodes, vector<int> weightList, CountTable adjList)
+{
+	//
+	vector<vector<int>> disMat(n, vector<int>(n, 0));
+	NodeDegreeChart degrees = GraphDegrees(adjList, nodes.size());
+	vector<int> leaves;
+	for (int i = 0; i < degrees.size();i++)
+	{
+		if (degrees[i]==PAIR(1, 1))
+		{
+			leaves.push_back(nodes[i]);
+		}
+	}
+	sort(leaves.begin(), leaves.end());
+	for (int i = 0; i < leaves.size();i++)
+	{
+		int leaf = leaves[i];
+		vector<int> visited(leaves.begin(), leaves.begin()+i+1);
+		vector<PATH> leafPaths;
+		map<PAIR, int> costMap;
+
+		int nextLeaf;
+		for (int j = 0; j < adjList.size();j++)
+		{
+			if (nodes[adjList[j].first] == leaf)
+			{
+				nextLeaf = nodes[adjList[j].second];
+				break;
+			}
+		}
+		DepthFirst(nodes, adjList, weightList, leaves,
+			leaf, nextLeaf, visited,
+			costMap, leafPaths);
+		//
+		vector<PATH> totalPath = leafPaths;
+		PATH onePath;
+		onePath.nextNode = leaf;
+		onePath.costSum = 0;
+		totalPath.insert(totalPath.begin(), onePath);
+		for (int i = 0; i < totalPath.size(); i++)
+		{
+			disMat[leaf][totalPath[i].nextNode] = totalPath[i].costSum;
+			disMat[totalPath[i].nextNode][leaf] = totalPath[i].costSum;
+		}
+	}
+
+	return disMat;
+}
+
+int LimbLengthProblem(int n, int j, vector<vector<int>> disMat)
+{
+	int limbLen = INT_MAX;
+
+	for (int i = 0; i < n;i++)
+	{
+		for (int k = i + 1; k < n;k++)
+		{
+			if (i!=j && k!=j)
+			{
+				int val = (disMat[i][j] + disMat[k][j] - disMat[i][k]) / 2;
+				if (val<limbLen)
+				{
+					limbLen = val;
+				}
+			}
+		}
+	}
+
+	return limbLen;
+}
+
+PAIR TwoLeavesCondition(vector<vector<int>> disMat, int n)
+{
+	for (int i = 0; i < n;i++)
+	{
+		for (int k = i + 1; k < n;k++)
+		{
+			if (disMat[i][k]==disMat[i][n-1]+disMat[n-1][k])
+			{
+				return PAIR(i,k);
+			}
+		}
+	}
+}
+
+vector<int> BreathFirst(TREE t, int x, int i, int k)
+{
+	vector<vector<int>> que(1, vector<int>(1, i));
+	vector<int> visited(1, i);
+	vector<int> actual_path;
+	while (que.size()>0)
+	{
+		vector<int> path = que[que.size()-1];
+		que.pop_back();
+		int node = path[path.size() - 1];
+		if (!Belong2PepValues(node, visited))
+		{
+			visited.push_back(node);
+		}
+		if (node==k)
+		{
+			actual_path = path;
+			break;
+		}
+		map<int, vector<PAIR>>::iterator edgeIter;
+		edgeIter = t.edges.find(node);
+		for (int i = 0; i < edgeIter->second.size(); i++)
+		{
+			PAIR nextnode = edgeIter->second[i];
+			if (!Belong2PepValues(nextnode.first, visited))
+			{
+				vector<int> tmp = path;
+				tmp.push_back(nextnode.first);
+				que.push_back(tmp);
+			}
+		}
+	}
+	int w;
+	int cost = 0;
+	for (int n = 0; n < actual_path.size() - 1;n++)
+	{
+		int i = actual_path[n];
+		int j = actual_path[n + 1];
+		map<int, vector<PAIR>>::iterator edgeIter;
+		edgeIter = t.edges.find(i);
+		
+		for (int m = 0; m < edgeIter->second.size();m++)
+		{
+			if ((edgeIter->second)[m].first==j)
+			{
+				w = (edgeIter->second)[m].second;
+				break;
+			}
+		}
+		if (cost + w > x)
+		{
+			vector<int> tmp(4, 0);
+			tmp[0] = i;
+			tmp[1] = j;
+			tmp[2] = x - cost;
+			tmp[3] = cost + w - x;
+			return tmp;
+		}
+		cost += w;
+	}
+
+	vector<int> breOut;
+	return breOut;
+}
+
+pair<TREE, int> AdditivePhylogeny(int innerStart, vector<vector<int>> disMat)
+//	vector<PAIR>& adjMat, vector<int> weightList)
+{
+	int n = disMat.size();
+	if (n==2)
+	{
+		TREE tree;
+		tree.Link(0, 1, disMat[0][1]);
+		return pair<TREE, int>(tree, innerStart);
+	}
+	int limb = LimbLengthProblem(n, n - 1, disMat);
+	for (int j = 0; j < n - 1;j++)
+	{
+		disMat[j][n - 1] -= limb;
+		disMat[n - 1][j] = disMat[j][n - 1];
+	}
+	PAIR idx = TwoLeavesCondition(disMat, n);
+	int i = idx.first;
+	int k = idx.second;
+	int x = disMat[i][n - 1];
+	for (int j = 0; j < n - 1;j++)
+	{
+		disMat[j].pop_back();
+	}
+	disMat.pop_back();
+
+	pair<TREE, int> tmp = AdditivePhylogeny(innerStart, disMat);
+	innerStart = tmp.second;
+	TREE t = tmp.first;
+
+	vector<int> breOut = BreathFirst(t, x, i, k);
+	int v = breOut[0];
+	if (breOut[2]!=0)
+	{
+		v = innerStart;
+		innerStart += 1;
+		t.Link(breOut[1], v, breOut[3]);
+		t.Link(breOut[0], v, breOut[2]);
+		t.Unlink(breOut[0], breOut[1]);
+	}
+	t.Link(v, n - 1, limb);
+	return pair<TREE, int>(t, innerStart);
+}
+
+vector<string> AdditivePhylogenyProblem(int innerStart, vector<vector<int>> disMat)
+{
+	vector<string> outStr;
+	pair<TREE, int> outPair = AdditivePhylogeny(innerStart, disMat);
+	TREE t = outPair.first;
+	t.NodesSort();
+	for (int i = 0; i < t.nodes.size(); i++)
+	{
+		int node = t.nodes[i];
+		map<int, vector<PAIR>>::iterator edgeIter;
+		edgeIter = t.edges.find(node);
+		if (edgeIter!=t.edges.end())
+		{
+			for (int j = 0; j < edgeIter->second.size();j++)
+			{
+				PAIR edge = (edgeIter->second)[j];
+				string tmp = to_string(node) + "->" + to_string(edge.first) + ':' + to_string(edge.second);
+				outStr.push_back(tmp);
+			}
+		}
+	}
+	return outStr;
 }

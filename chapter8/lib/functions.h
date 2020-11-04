@@ -20,12 +20,26 @@ typedef map<char, int> IntegerMassTable;
 typedef vector< pair<int, int> > CountTable;
 typedef pair<int, int> PAIR;
 typedef map<int, int> NodeWeightMap;
+struct PATH
+{
+	int nextNode;
+	vector<int> nodeList;
+	int costSum;
+};
 
 struct cmp
 {
 	bool operator() (const PAIR& P1, const PAIR& P2)
 	{
 		return P1.second > P2.second;
+	}
+};
+
+struct pathcmp
+{
+	bool operator() (const PATH& P1, const PATH& P2)
+	{
+		return P1.nextNode > P2.nextNode;
 	}
 };
 
@@ -171,4 +185,10 @@ vector<vector<int>> TwoBreakOnGenome(vector<vector<int>> genome,
 vector<vector<vector<int>>> TwoBreakSorting(vector<vector<int>> genoP, vector<vector<int>> genoQ);
 
 vector<PAIR> SharedKmersProblem(int k, string seq1, string seq2);
+
+vector<vector<int>> DistanceBetweenLeaves(int n, vector<int> nodes, vector<int> weightList, CountTable adjList);
+
+int LimbLengthProblem(int n, int j, vector<vector<int>> disMat);
+
+vector<string> AdditivePhylogenyProblem(int innerStart, vector<vector<int>> disMat);
 #endif
