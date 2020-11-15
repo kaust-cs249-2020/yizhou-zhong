@@ -133,3 +133,35 @@ bool Belong2PepValues(int pep, vector<int> pepValues, int& idx)
 	}
 	return false;
 }
+
+bool IsDigits(const std::string &str)
+{
+	return str.find_first_not_of("0123456789") == std::string::npos;
+}
+
+bool Belong2Nodes(NODE a, vector<NODE> nodes, int& idx)
+{
+	for (int i = 0; i < nodes.size(); i++)
+	{
+		if (nodes[i].index == a.index &&
+			nodes[i].label == a.label)
+		{
+			idx = i;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Belong2Nodes(NODE a, vector<NODE> nodes)
+{
+	for (int i = 0; i < nodes.size(); i++)
+	{
+		if (nodes[i].index == a.index &&
+			nodes[i].label == a.label)
+		{
+			return true;
+		}
+	}
+	return false;
+}

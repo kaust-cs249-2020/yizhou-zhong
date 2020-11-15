@@ -6,10 +6,11 @@
 class TREE
 {
 public:
-	TREE()
+	TREE(bool weightflag = false)
 	{
 		this->N = 0;
 		this->bidirectional = true;
+		this->weightisfloat = weightflag;
 	}
 
 	void HalfLink(int a, int b, int weight=1)
@@ -41,7 +42,45 @@ public:
 		}
 	}
 
+	void HalfLink(int a, int b, float weight)
+	{
+		if (!Belong2PepValues(a, this->nodes))
+		{
+			this->nodes.push_back(a);
+		}
+		map<int, vector<pair<int, float>>>::iterator edgeIter;
+		edgeIter = this->edgesfloat.find(a);
+		if (edgeIter == this->edgesfloat.end())
+		{
+			vector<pair<int, float>> tmp = vector<pair<int, float>>(1, pair<int, float>(b, weight));
+			this->edgesfloat.insert(pair<int, vector<pair<int, float>>>(a, tmp));
+		}
+		else
+		{
+			vector<pair<int, float>> tmp = edgeIter->second;
+			for (int i = 0; i < tmp.size(); i++)
+			{
+				if (tmp[i].first == b)
+				{
+					tmp.erase(tmp.begin() + i);
+					i--;
+				}
+			}
+			tmp.push_back(pair<int, float>(b, weight));
+			edgeIter->second = tmp;
+		}
+	}
+
 	void Link(int start, int end, int weight=1)
+	{
+		this->HalfLink(start, end, weight);
+		if (this->bidirectional)
+		{
+			this->HalfLink(end, start, weight);
+		}
+	}
+
+	void Link(int start, int end, float weight)
 	{
 		this->HalfLink(start, end, weight);
 		if (this->bidirectional)
@@ -52,20 +91,41 @@ public:
 
 	void HalfUnlink(int a, int b)
 	{
-		map<int, vector<PAIR>>::iterator edgeIter;
-		edgeIter = this->edges.find(a);
-		vector<PAIR> links=edgeIter->second;
-		for (int i = 0; i < links.size();i++)
+		if (this->weightisfloat)
 		{
-			if (links[i].first==b)
+			map<int, vector<pair<int, float>>>::iterator edgeIter;
+			edgeIter = this->edgesfloat.find(a);
+			vector<pair<int, float>> links = edgeIter->second;
+			for (int i = 0; i < links.size(); i++)
 			{
-				links.erase(links.begin() + i);
-				i--;
+				if (links[i].first == b)
+				{
+					links.erase(links.begin() + i);
+					i--;
+				}
+			}
+			if (links.size() < edgeIter->second.size())
+			{
+				edgeIter->second = links;
 			}
 		}
-		if (links.size() < edgeIter->second.size())
+		else
 		{
-			edgeIter->second = links;
+			map<int, vector<PAIR>>::iterator edgeIter;
+			edgeIter = this->edges.find(a);
+			vector<PAIR> links = edgeIter->second;
+			for (int i = 0; i < links.size(); i++)
+			{
+				if (links[i].first == b)
+				{
+					links.erase(links.begin() + i);
+					i--;
+				}
+			}
+			if (links.size() < edgeIter->second.size())
+			{
+				edgeIter->second = links;
+			}
 		}
 	}
 
@@ -85,15 +145,31 @@ public:
 
 	void RemoveBackwardLinks(int root)
 	{
-		this->bidirectional = false;
-		map<int, vector<PAIR>>::iterator edgeIter;
-		edgeIter = edges.find(root);
-		vector<PAIR> tmp = edgeIter->second;
-		for (int i = 0; i < tmp.size();i++)
+		if (weightisfloat)
 		{
-			int child = tmp[i].first;
-			this->HalfUnlink(child, root);
-			this->RemoveBackwardLinks(child);
+			this->bidirectional = false;
+			map<int, vector<pair<int, float>>>::iterator edgeIter;
+			edgeIter = edgesfloat.find(root);
+			vector<pair<int, float>> tmp = edgeIter->second;
+			for (int i = 0; i < tmp.size(); i++)
+			{
+				int child = tmp[i].first;
+				this->HalfUnlink(child, root);
+				this->RemoveBackwardLinks(child);
+			}
+		}
+		else
+		{
+			this->bidirectional = false;
+			map<int, vector<PAIR>>::iterator edgeIter;
+			edgeIter = edges.find(root);
+			vector<PAIR> tmp = edgeIter->second;
+			for (int i = 0; i < tmp.size(); i++)
+			{
+				int child = tmp[i].first;
+				this->HalfUnlink(child, root);
+				this->RemoveBackwardLinks(child);
+			}
 		}
 	}
 
@@ -105,6 +181,116 @@ public:
 public:
 	vector<int> nodes;
 	map<int, vector<PAIR>> edges;
+	map<int, vector<pair<int, float>>> edgesfloat;
+	bool bidirectional;
+	int N;
+	bool weightisfloat;
+};
+
+class NODETREE
+{
+public:
+	NODETREE()
+	{
+		this->N = 0;
+		this->bidirectional = true;
+	}
+
+	void HalfLink(NODE a, NODE b, float weight=1.0f)
+	{
+		if (!Belong2Nodes(a, this->nodes))
+		{
+			this->nodes.push_back(a);
+		}
+		map<NODE, vector<pair<NODE, float>>>::iterator edgeIter;
+		edgeIter = this->edges.find(a);
+		if (edgeIter == this->edges.end())
+		{
+			vector<pair<NODE, float>> tmp = vector<pair<NODE, float>>(1, pair<NODE, float>(b, weight));
+			this->edges.insert(pair<NODE, vector<pair<NODE, float>>>(a, tmp));
+		}
+		else
+		{
+			vector<pair<NODE, float>> tmp = edgeIter->second;
+			for (int i = 0; i < tmp.size(); i++)
+			{
+				if (tmp[i].first.index == b.index
+					&& tmp[i].first.label == b.label)
+				{
+					tmp.erase(tmp.begin() + i);
+					i--;
+				}
+			}
+			tmp.push_back(pair<NODE, float>(b, weight));
+			edgeIter->second = tmp;
+		}
+	}
+
+	void Link(NODE start, NODE end, float weight = 1.0f)
+	{
+		this->HalfLink(start, end, weight);
+		if (this->bidirectional)
+		{
+			this->HalfLink(end, start, weight);
+		}
+	}
+
+	//void HalfUnlink(NODE a, NODE b)
+	//{
+	//	map<NODE, vector<pair<NODE, float>>>::iterator edgeIter;
+	//	edgeIter = this->edges.find(a);
+	//	vector<pair<NODE, float>> links = edgeIter->second;
+	//	for (int i = 0; i < links.size(); i++)
+	//	{
+	//		if (links[i].first.index == b.index &&
+	//			links[i].first.label == b.label)
+	//		{
+	//			links.erase(links.begin() + i);
+	//			i--;
+	//		}
+	//	}
+	//	if (links.size() < edgeIter->second.size())
+	//	{
+	//		edgeIter->second = links;
+	//	}
+	//}
+
+	//void Unlink(NODE i, NODE k)
+	//{
+	//	this->HalfUnlink(i, k);
+	//	if (this->bidirectional)
+	//	{
+	//		this->HalfUnlink(k, i);
+	//	}
+	//}
+
+	//int NumNodes()
+	//{
+	//	return this->nodes.size();
+	//}
+
+	//void RemoveBackwardLinks(NODE root)
+	//{
+	//	this->bidirectional = false;
+	//	map<NODE, vector<pair<NODE, float>>>::iterator edgeIter;
+	//	edgeIter = edges.find(root);
+	//	vector<pair<NODE, float>> tmp = edgeIter->second;
+	//	for (int i = 0; i < tmp.size(); i++)
+	//	{
+	//		NODE child = tmp[i].first;
+	//		this->HalfUnlink(child, root);
+	//		this->RemoveBackwardLinks(child);
+	//	}
+	//}
+
+	//void NodesSort()
+	//{
+	//	sort(this->nodes.begin(), this->nodes.end());
+	//}
+
+public:
+	vector<NODE> nodes;
+	map<NODE, vector<pair<NODE, float>>> edges;
 	bool bidirectional;
 	int N;
 };
@@ -130,7 +316,6 @@ StrFreqTable FrequencyTable(string* Text, int k)
 	int n = Text->length();
 	StrFreqTable freMap;
 	StrFreqTable::iterator freMapIte;
-
 	for (int i = 0; i < n - k + 1; i++)
 	{
 		string patternStr = Text->substr(i, k);
@@ -3605,7 +3790,6 @@ void DepthFirst(vector<int> nodes, CountTable adjList, vector<int> weightList, v
 vector<vector<int>> DistanceBetweenLeaves(int n, 
 	vector<int> nodes, vector<int> weightList, CountTable adjList)
 {
-	//
 	vector<vector<int>> disMat(n, vector<int>(n, 0));
 	NodeDegreeChart degrees = GraphDegrees(adjList, nodes.size());
 	vector<int> leaves;
@@ -3692,7 +3876,7 @@ vector<int> BreathFirst(TREE t, int x, int i, int k)
 {
 	vector<vector<int>> que(1, vector<int>(1, i));
 	vector<int> visited(1, i);
-	vector<int> actual_path;
+	vector<int> actualPath;
 	while (que.size()>0)
 	{
 		vector<int> path = que[que.size()-1];
@@ -3704,7 +3888,7 @@ vector<int> BreathFirst(TREE t, int x, int i, int k)
 		}
 		if (node==k)
 		{
-			actual_path = path;
+			actualPath = path;
 			break;
 		}
 		map<int, vector<PAIR>>::iterator edgeIter;
@@ -3722,10 +3906,10 @@ vector<int> BreathFirst(TREE t, int x, int i, int k)
 	}
 	int w;
 	int cost = 0;
-	for (int n = 0; n < actual_path.size() - 1;n++)
+	for (int n = 0; n < actualPath.size() - 1;n++)
 	{
-		int i = actual_path[n];
-		int j = actual_path[n + 1];
+		int i = actualPath[n];
+		int j = actualPath[n + 1];
 		map<int, vector<PAIR>>::iterator edgeIter;
 		edgeIter = t.edges.find(i);
 		
@@ -3754,7 +3938,6 @@ vector<int> BreathFirst(TREE t, int x, int i, int k)
 }
 
 pair<TREE, int> AdditivePhylogeny(int innerStart, vector<vector<int>> disMat)
-//	vector<PAIR>& adjMat, vector<int> weightList)
 {
 	int n = disMat.size();
 	if (n==2)
@@ -3818,5 +4001,418 @@ vector<string> AdditivePhylogenyProblem(int innerStart, vector<vector<int>> disM
 			}
 		}
 	}
+	return outStr;
+}
+
+PAIR ClosestClusters(DMAT d)
+{
+	vector<vector<float>> dmat = d.mat;
+	float minDist = FLT_MAX;
+	PAIR index;
+	for (int i = 0; i < dmat.size();i++)
+	{
+		for (int j = 0; j < dmat[0].size();j++)
+		{
+			if (i!=j)
+			{
+				if (dmat[i][j]<minDist)
+				{
+					minDist = dmat[i][j];
+					index = PAIR(d.index[i], d.index[j]);
+				}
+			}
+		}
+	}
+	return index;
+}
+
+PAIR ClosestClustersIdx(DMAT d)
+{
+	vector<vector<float>> dmat = d.mat;
+	float minDist = FLT_MAX;
+	PAIR index;
+	for (int i = 0; i < dmat.size(); i++)
+	{
+		for (int j = 0; j < dmat[0].size(); j++)
+		{
+			if (i != j)
+			{
+				if (dmat[i][j] < minDist)
+				{
+					minDist = dmat[i][j];
+					index = PAIR(i, j);
+				}
+			}
+		}
+	}
+	return index;
+}
+
+float FindMatValue(DMAT d, int i, int j)
+{
+	int idx1, idx2;
+	Belong2PepValues(i, d.index, idx1);
+	Belong2PepValues(j, d.index, idx2);
+	return d.mat[idx1][idx2];
+}
+
+vector<string> UPGMA(int n, vector<vector<int>> disMat)
+{
+	int inner = n;
+	map<int, int> clusters;
+	map<int, int>::iterator cluIter;
+	map<int, float> age;
+	map<int, float>::iterator ageIter;
+	map<int, vector<int>> adjList;
+	map<int, vector<int>>::iterator adjIter;
+	map<PAIR, float> weights;
+	map<PAIR, float>::iterator weiIter;
+	for (int i = 0; i < n; i++)
+	{
+		clusters.insert(pair<int, int>(i, 1));
+		age.insert(pair<int, float>(i, 0));
+		adjList.insert(pair<int, vector<int>>(i, vector<int>(0)));
+	}
+	DMAT d;
+	d.mat = vector<vector<float>>(n, vector<float>(n,0));
+	d.index = vector<int>(n, 0);
+	for (int i = 0; i < n; i++)
+	{
+		d.index[i] = i;
+		for (int j = 0; j < n;j++)
+		{
+			d.mat[i][j] = float(disMat[i][j]);
+		}
+	}
+
+	while (clusters.size() > 1)
+	{
+		PAIR idx = ClosestClusters(d);
+		int i = idx.first;
+		int j = idx.second;
+		cluIter = clusters.find(i);
+		int ci = cluIter->second;
+		cluIter = clusters.find(j);
+		int cj = cluIter->second;
+		int elements_count = ci + cj;
+		vector<int> tmp = {i, j};
+		adjList.insert(pair<int, vector<int>>(inner, tmp));
+		adjIter = adjList.find(i);
+		adjIter->second.push_back(inner);
+		adjIter = adjList.find(j);
+		adjIter->second.push_back(inner);
+
+		weights.insert(pair<PAIR, float>(PAIR(inner, i),0));
+		weights.insert(pair<PAIR, float>(PAIR(inner, j), 0));
+		weights.insert(pair<PAIR, float>(PAIR(i, inner), 0));
+		weights.insert(pair<PAIR, float>(PAIR(j, inner), 0));
+
+		age.insert(pair<int, float>(inner, FindMatValue(d, i, j)/ 2));
+		clusters.erase(i);
+		clusters.erase(j);
+
+		vector<float> newMatValue;
+		for (cluIter = clusters.begin(); cluIter != clusters.end();cluIter++)
+		{
+			int m = cluIter->first;
+			float newDis = (FindMatValue(d, i, m) * ci + FindMatValue(d, j, m) * cj) / elements_count;
+			newMatValue.push_back(newDis);
+		}
+		int tmpIdx;
+		Belong2PepValues(i, d.index, tmpIdx);
+		d.index.erase(d.index.begin() + tmpIdx);
+		d.mat.erase(d.mat.begin() + tmpIdx);
+		for (int p = 0; p < d.mat.size();p++)
+		{
+			d.mat[p].erase(d.mat[p].begin() + tmpIdx);
+		}
+		Belong2PepValues(j, d.index, tmpIdx);
+		d.index.erase(d.index.begin() + tmpIdx);
+		d.mat.erase(d.mat.begin() + tmpIdx);
+		for (int p = 0; p < d.mat.size(); p++)
+		{
+			d.mat[p].erase(d.mat[p].begin() + tmpIdx);
+		}
+		d.index.push_back(inner);
+		for (int p = 0; p < newMatValue.size(); p++)
+		{
+			d.mat[p].push_back(newMatValue[p]);
+		}
+		newMatValue.push_back(0);
+		d.mat.push_back(newMatValue);
+		clusters.insert(pair<int, int>(inner, elements_count));
+		inner++;
+	}
+
+	for (weiIter = weights.begin(); weiIter != weights.end(); weiIter++)
+	{
+		if (weiIter->second == 0)
+		{
+			int v = weiIter->first.first;
+			int w = weiIter->first.second;
+			map<PAIR, float>::iterator tmpIter = weights.find(PAIR(v, w));
+			map<int, float>::iterator ageIter1 = age.find(v);
+			map<int, float>::iterator ageIter2 = age.find(w);
+			tmpIter->second = abs(ageIter1->second - ageIter2->second);
+			tmpIter = weights.find(PAIR(w, v));
+			tmpIter->second = abs(ageIter1->second - ageIter2->second);
+		}
+	}
+
+	vector<string> outStr;
+	for (weiIter = weights.begin(); weiIter != weights.end(); weiIter++)
+	{
+		string tmpstr = to_string(weiIter->first.first) +
+			"->" + to_string(weiIter->first.second) + ':' +
+			to_string(weiIter->second).substr(0, 5);
+		outStr.push_back(tmpstr);
+	}
+
+	return outStr;
+}
+
+vector<float> TotalDistance(DMAT d)
+{
+	vector<float> dt;
+	for (int i = 0; i < d.index.size();i++)
+	{
+		float sum=0;
+		for (int j = 0; j < d.index.size();j++)
+		{
+			sum += d.mat[i][j];
+		}
+		dt.push_back(sum);
+	}
+	return dt;
+}
+
+DMAT Dstar(DMAT d, vector<float> td, int num)
+{
+	DMAT ds=d;
+	for (int m = 0; m < d.index.size();m++)
+	{
+		for (int n = 0; n < d.index.size();n++)
+		{
+			int i = d.index[m];
+			int j = d.index[n];
+			if (j>i)
+			{
+				ds.mat[m][n] = (num - 2)*d.mat[m][n] - td[m] - td[n];
+				ds.mat[n][m] = ds.mat[m][n];
+			}
+			
+		}
+	}
+	return ds;
+}
+
+TREE NeighborJoining(DMAT d, vector<int> nodes)
+{
+	int n = d.index.size();
+	if (n==2)
+	{
+		int k0 = d.index[0];
+		int k1 = d.index[1];
+		TREE t(true);
+		t.Link(k0, k1, d.mat[0][1]);
+		return t;
+	}
+	vector<float> td = TotalDistance(d);
+	DMAT ds = Dstar(d, td, n);
+	PAIR idx = ClosestClustersIdx(ds);
+	int i = idx.first;
+	int j = idx.second;
+	int iIndex = d.index[i];
+	int jIndex = d.index[j];
+	float delta = (td[i] - td[j]) / (n - 2);
+	float limbLengthi = 0.5*(d.mat[i][j] + delta);
+	float limbLengthj = 0.5*(d.mat[i][j] - delta);
+	vector<float> m;
+	int inner = nodes[nodes.size() - 1] + 1;
+	nodes.push_back(inner);
+	for (int k = 0; k < d.index.size();k++)
+	{
+		float tp = 0.5*(d.mat[k][i] + d.mat[k][j] - d.mat[i][j]);
+		//m.insert(pair<int, float>(d.index[k], tp));
+		m.push_back(tp);
+	}
+	d.index.push_back(inner);
+	if (i<j)
+	{
+		d.index.erase(d.index.begin() + i);
+		d.index.erase(d.index.begin() + j - 1);
+		for (int k = 0; k < d.mat.size(); k++)
+		{
+			d.mat[k].push_back(m[k]);
+		}
+		m.push_back(0);
+		d.mat.push_back(m);
+
+		d.mat.erase(d.mat.begin()+i);
+		d.mat.erase(d.mat.begin() + j-1);
+		for (int k = 0; k < d.mat.size(); k++)
+		{
+			d.mat[k].erase(d.mat[k].begin()+i);
+			d.mat[k].erase(d.mat[k].begin() + j-1);
+		}
+	}
+	else
+	{
+		d.index.erase(d.index.begin() + j);
+		d.index.erase(d.index.begin() + i - 1);
+		for (int k = 0; k < d.mat.size(); k++)
+		{
+			d.mat[k].push_back(m[k]);
+		}
+		m.push_back(0);
+		d.mat.push_back(m);
+
+		d.mat.erase(d.mat.begin() + j);
+		d.mat.erase(d.mat.begin() + i - 1);
+		for (int k = 0; k < d.mat.size(); k++)
+		{
+			d.mat[k].erase(d.mat[k].begin() + j);
+			d.mat[k].erase(d.mat[k].begin() + i - 1);
+		}
+	}
+
+	TREE t = NeighborJoining(d, nodes);
+	t.Link(inner, iIndex, limbLengthi);
+	t.Link(inner, jIndex, limbLengthj);
+
+	return t;
+}
+
+vector<string> NeighborJoiningProblem(int n, vector<vector<int>> disMat)
+{
+	vector<int> nodes;
+	DMAT dmat;
+	dmat.mat = vector<vector<float>>(n, vector<float>(n, 0));
+	for (int i = 0; i < n; i++)
+	{
+		nodes.push_back(i);
+		for (int j = 0; j < n;j++)
+		{
+			dmat.mat[i][j] = disMat[i][j];
+		}
+	}
+	dmat.index = nodes;
+
+	TREE t = NeighborJoining(dmat, nodes);
+	t.NodesSort();
+	vector<string> outStr;
+	for (int i = 0; i < t.nodes.size(); i++)
+	{
+		int node = t.nodes[i];
+		map<int, vector<pair<int, float>>>::iterator edgeIter;
+		edgeIter = t.edgesfloat.find(node);
+		if (edgeIter != t.edgesfloat.end())
+		{
+			for (int j = 0; j < edgeIter->second.size(); j++)
+			{
+				pair<int, float> edge = (edgeIter->second)[j];
+				string tmp = to_string(node) + "->" + to_string(edge.first) + ':' + to_string(edge.second);
+				outStr.push_back(tmp);
+			}
+		}
+	}
+	return outStr;
+}
+
+NODETREE Format2Tree(int& m, vector<string> treeString)
+{
+	m = 0;
+	NODETREE T;
+	map<string, NODE> nodes;
+	map<string, NODE>::iterator nodeIter;
+	int i = 0; 
+	for (int j = 0; j < treeString.size();j++)
+	{
+		int idx = treeString[j].find("->");
+		string a = treeString[j].substr(0, idx);
+		string b = treeString[j].substr(idx + 2, treeString[j].length() - idx - 2);
+		NODE a_in_node(a);
+		NODE b_in_node(b);
+		// if a is digits
+		if (IsDigits(a))
+		{
+			nodeIter = nodes.find(a);
+			if (nodeIter!=nodes.end())
+			{
+				a_in_node = nodeIter->second;
+			}
+			else
+			{
+				a_in_node = NODE(a);
+				nodes.insert(pair<string, NODE>(a, a_in_node));
+			}
+		}
+		else
+		{
+			if (m==0)
+			{
+				m = a.length();
+			}
+			nodeIter = nodes.find(a);
+			if (nodeIter != nodes.end())
+			{
+				a_in_node = nodeIter->second;
+			}
+			else
+			{
+				string i_str = to_string(i);
+				a_in_node = NODE(i_str, a);
+				i++;
+				nodes.insert(pair<string, NODE>(a, a_in_node));
+			}
+		}
+
+		// if b is digits
+		if (IsDigits(b))
+		{
+			nodeIter = nodes.find(b);
+			if (nodeIter != nodes.end())
+			{
+				b_in_node = nodeIter->second;
+			}
+			else
+			{
+				b_in_node = NODE(b);
+				nodes.insert(pair<string, NODE>(b, b_in_node));
+			}
+		}
+		else
+		{
+			if (m==0)
+			{
+				m = b.length();
+			}
+			nodeIter = nodes.find(b);
+			if (nodeIter!=nodes.end())
+			{
+				b_in_node = nodeIter->second;
+			}
+			else
+			{
+				string i_str = to_string(i);
+				b_in_node = NODE(i_str, b);
+				i++;
+				nodes.insert(pair<string, NODE>(b, b_in_node));
+			}
+		}
+		a_in_node.children.push_back(b_in_node);
+		b_in_node.parent = vector<NODE>(1,a_in_node);
+		T.Link(a_in_node, b_in_node);
+	}
+
+	return T;
+}
+
+vector<string> SmallParsimony(int n, vector<string> treeString)
+{
+	int m;
+	NODETREE T = Format2Tree(m, treeString);
+	//
+	vector<string> outStr;
 	return outStr;
 }

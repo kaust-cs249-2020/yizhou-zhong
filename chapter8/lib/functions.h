@@ -43,6 +43,12 @@ struct pathcmp
 	}
 };
 
+struct DMAT
+{
+	vector<vector<float>> mat;
+	vector<int> index;
+};
+
 int PatternCount(string* Text, string Pattern);
 
 map<string, int> FrequencyTable(string* Text, int k);
@@ -191,4 +197,10 @@ vector<vector<int>> DistanceBetweenLeaves(int n, vector<int> nodes, vector<int> 
 int LimbLengthProblem(int n, int j, vector<vector<int>> disMat);
 
 vector<string> AdditivePhylogenyProblem(int innerStart, vector<vector<int>> disMat);
+
+vector<string> UPGMA(int n, vector<vector<int>> disMat);
+
+vector<string> NeighborJoiningProblem(int n, vector<vector<int>> disMat);
+
+vector<string> SmallParsimony(int n, vector<string> treeString);
 #endif
